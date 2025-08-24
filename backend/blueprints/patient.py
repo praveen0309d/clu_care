@@ -1,15 +1,31 @@
 import os
-from flask import Blueprint, request, jsonify,send_from_directory
+from flask import Blueprint, request, jsonify, send_from_directory
 from pymongo import MongoClient
-from bson.json_util import dumps
 from bson import ObjectId
 import datetime
+from werkzeug.utils import secure_filename
 
 patient_bp = Blueprint("patient_bp", __name__)
 client = MongoClient("mongodb://localhost:27017/")
 db = client.hospital_db
 
-# Get patient info by patientId
+def serialize_doc(doc):
+    """Recursively convert ObjectIds into strings"""
+    if isinstance(doc, list):
+        return [serialize_doc(d) for d in doc]
+    elif isinstance(doc, dict):
+        new_doc = {}
+        for k, v in doc.items():
+            if isinstance(v, ObjectId):
+                new_doc[k] = str(v)
+            else:
+                new_doc[k] = serialize_doc(v)
+        return new_doc
+    else:
+        return doc
+
+
+# ✅ Get patient info by patientId
 @patient_bp.route("/<patient_id>", methods=["GET"])
 def get_patient(patient_id):
     try:
@@ -20,16 +36,25 @@ def get_patient(patient_id):
         # Fetch assigned doctor details
         assigned_doctor = None
         if "assignedDoctor" in patient and patient["assignedDoctor"]:
-            assigned_doctor = db.staff.find_one({"_id": patient["assignedDoctor"]})
-            if assigned_doctor:
-                assigned_doctor = {
-                    "name": assigned_doctor.get("name"),
-                    "department": assigned_doctor.get("department"),
-                    "specialization": assigned_doctor.get("specialization"),
-                    "email": assigned_doctor.get("email")
-                }
+            try:
+                doctor_obj_id = (
+                    patient["assignedDoctor"]
+                    if isinstance(patient["assignedDoctor"], ObjectId)
+                    else ObjectId(patient["assignedDoctor"])
+                )
+                doctor = db.staff.find_one({"_id": doctor_obj_id})
+                if doctor:
+                    assigned_doctor = {
+                        "id": str(doctor["_id"]),
+                        "name": doctor.get("name"),
+                        "department": doctor.get("department"),
+                        "specialization": doctor.get("specialization"),
+                        "email": doctor.get("email"),
+                    }
+            except Exception as e:
+                print(f"❌ Doctor fetch error: {e}")
 
-        # Prepare patient data
+        # Prepare patient data (serialize nested ObjectIds)
         patient_data = {
             "patientId": patient.get("patientId"),
             "name": patient.get("name"),
@@ -44,9 +69,9 @@ def get_patient(patient_id):
             "admissionDate": patient.get("admissionDate", ""),
             "status": patient.get("status", ""),
             "assignedDoctor": assigned_doctor,
-            "appointments": patient.get("appointments", []),
-            "prescriptions": patient.get("prescriptions", []),
-            "labReports": clean_lab_reports(patient.get("labReports", []))
+            "appointments": serialize_doc(patient.get("appointments", [])),
+            "prescriptions": serialize_doc(patient.get("prescriptions", [])),
+            "labReports": clean_lab_reports(patient.get("labReports", [])),
         }
 
         return jsonify(patient_data), 200
@@ -64,7 +89,7 @@ def get_prescriptions(patient_id):
         if not patient:
             return jsonify({"message": "Patient not found"}), 404
 
-        prescriptions = patient.get("prescriptions", [])
+        prescriptions = serialize_doc(patient.get("prescriptions", []))
         return jsonify(prescriptions), 200
 
     except Exception as e:
@@ -72,29 +97,26 @@ def get_prescriptions(patient_id):
         return jsonify({"message": "Error fetching prescriptions", "error": str(e)}), 500
 
 
-# Get all patients
+# ✅ Get all patients
 @patient_bp.route("/", methods=["GET"])
 def get_all_patients():
     try:
         patients = list(db.patients.find())
-        return dumps(patients), 200
+        patients = serialize_doc(patients)
+        return jsonify(patients), 200
     except Exception as e:
         print(f"❌ Error fetching patients: {str(e)}")
         return jsonify({"message": "Error fetching patients", "error": str(e)}), 500
 
 
-
-
-# Absolute path to your uploads folder
+# ✅ Serve uploaded lab report files
 UPLOAD_FOLDER = r"C:\Users\prave\OneDrive\Documents\hospital_expo_\clu_care\backend\uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-from werkzeug.utils import secure_filename
-
-@patient_bp.route('/uploads/<path:filename>')
+@patient_bp.route("/uploads/<path:filename>")
 def uploaded_file(filename):
     try:
-        safe_name = secure_filename(filename)  # prevents traversal
+        safe_name = secure_filename(filename)  # prevents path traversal
         return send_from_directory(
             UPLOAD_FOLDER,
             safe_name,
@@ -111,6 +133,6 @@ def clean_lab_reports(lab_reports):
             "date": report.get("date"),
             "testName": report.get("testName"),
             "results": report.get("results"),
-            "file": report.get("file")  # ideally just filename, not full path
+            "file": report.get("file")  # ideally just filename
         })
     return cleaned
