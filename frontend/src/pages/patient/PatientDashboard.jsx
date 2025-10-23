@@ -4,6 +4,7 @@ import Appointments from "../../components/patient/Appointments";
 import Prescriptions from "../../components/patient/Prescriptions";
 import LabReports from "../../components/patient/LabReports";
 import AssignedDoctor from "../../components/patient/AssignedDoctor";
+import PredictForm from "../../components/patient/PredictForm";
 import "./PatientDashboard.css";
 import API_URL from "../../services/api";
 
@@ -142,6 +143,15 @@ const PatientDashboard = () => {
                 <span className="nav-icon">👨‍⚕️</span>
                 <span>My Doctor</span>
               </button>
+
+              <button 
+                className={`nav-item ${activeTab === "diseas" ? "active" : ""}`}
+                onClick={() => setActiveTab("diseas")}
+              >
+               <span className="nav-icon">🩺</span>
+<span>Disease Predict</span>
+              </button>  
+              
             </div>
 
             <div className="sidebar-footer">
@@ -171,6 +181,9 @@ const PatientDashboard = () => {
               )}
               {activeTab === "doctor" && patientData.assignedDoctor && (
                 <AssignedDoctor doctor={patientData.assignedDoctor} />
+              )}
+              {activeTab === "diseas" && patientData.assignedDoctor && (
+                <PredictForm doctor={patientData.assignedDoctor} />
               )}
             </div>
           </main>

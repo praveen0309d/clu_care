@@ -26,6 +26,77 @@
     "checkupDates": ["10-11-2023", "10-12-2023"]
   },
   {
+  "_id": {
+    "$oid": "68b08ed26c1eb393126f4168"
+  },
+  "patientId": "P-68b08ed2",
+  "name": "Ruthresh DR",
+  "age": "20",
+  "gender": "male",
+  "bloodGroup": "A+",
+  "type": "OPD",
+  "medicalSpecialty": "Plastic Surgeon",
+  "description": "Want to change my face to tharun",
+  "password": "tharunXruthresh",
+  "contact": {
+    "phone": "91235411551",
+    "email": "tharun@gmail.com",
+    "address": "420-ruthresh and his son"
+  },
+  "insurance": {
+    "provider": "420",
+    "policyNumber": "420"
+  },
+  "status": "registered",
+  "admissionDate": null,
+  "assignedDoctor": {
+    "$oid": "68a30faada90caeb2d1de0f3"
+  },
+  "wardNumber": "5",
+  "cartNumber": "7",
+  "labReports": [
+    {
+      "_id": {
+        "$oid": "68b08fe66c1eb393126f4169"
+      },
+      "date": "2025-08-29",
+      "testName": "X-Ray",
+      "results": "Bad",
+      "file": "/mypatient/uploads/Praveenaad.pdf"
+    }
+  ],
+  "prescriptions": [
+    {
+      "_id": {
+        "$oid": "68b090876c1eb393126f416a"
+      },
+      "date": "2025-08-28",
+      "medicines": [
+        {
+          "name": "Paracetamol",
+          "dosage": "1 tablet",
+          "time": "As needed"
+        },
+        {
+          "name": "Omeprazole",
+          "dosage": "5ml",
+          "time": "As needed"
+        },
+        {
+          "name": "Aspirin",
+          "dosage": "1 capsule",
+          "time": "As needed"
+        },
+        {
+          "name": "Calcium",
+          "dosage": "2 tablets",
+          "time": "As needed"
+        }
+      ]
+    }
+  ]
+},
+  {
     "_id": "68a31ac5a5f31cd9508b636d",
     "patientId": "P-68a31ac6",
     "name": "sanjay",

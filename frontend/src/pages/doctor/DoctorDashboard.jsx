@@ -8,6 +8,8 @@ import DoctorProfile from "../../components/doctor/DoctorProfile";
 import Appointments from "../../components/doctor/Appointments.jsx";
 import PatientReports from "../../components/doctor/PatientReports";
 import AddPrescription from "../../components/doctor/Prescriptions.jsx";
+import FetusPredictor from "../../components/doctor/PredictForm.jsx";
+import FetalSegmentation from "../../components/doctor/FetalSegmentation.jsx";
 // import OtherFeatures from "./OtherFeatures";
 
 function DoctorDashboard() {
@@ -136,6 +138,14 @@ function DoctorDashboard() {
               <span className="nav-icon">📊</span>
               Patient Reports
             </button>
+
+            {/* <button 
+              className={`nav-item ${activeTab === "fetalfegmentation" ? "active" : ""}`}
+              onClick={() => setActiveTab("fetalfegmentation")}
+            >
+              <span className="nav-icon">📊</span>
+              Fetal Segmentation
+            </button> */}
             
             <button 
               className={`nav-item ${activeTab === "addPrescription" ? "active" : ""}`}
@@ -152,6 +162,14 @@ function DoctorDashboard() {
               <span className="nav-icon">⚙️</span>
               Settings
             </button> */}
+                      <button 
+  className={`nav-item ${activeTab === "predictform" ? "active" : ""}`}
+  onClick={() => setActiveTab("predictform")}
+>
+  <span className="nav-icon">🩺</span>
+  Fetal Screening
+</button>
+
           </div>
 
           <div className="sidebar-footer">
@@ -169,6 +187,8 @@ function DoctorDashboard() {
             {activeTab === "appointments" && <Appointments doctorId={doctorId} />}
             {activeTab === "patientReports" && <PatientReports doctorId={doctorId} />}
             {activeTab === "addPrescription" && <AddPrescription doctorId={doctorId} />}
+            {activeTab === "predictform" && <FetusPredictor doctorId={doctorId} />}
+            {activeTab === "fetalsegmentation" && <FetalSegmentation doctorId={doctorId} />}
             {/* {activeTab === "others" && <OtherFeatures />} */}
           </div>
         </main>
