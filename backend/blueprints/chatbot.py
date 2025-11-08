@@ -7,6 +7,9 @@ from pymongo import MongoClient
 from bson.objectid import ObjectId
 from collections import defaultdict, deque
 import datetime
+from googletrans import Translator
+translator = Translator()
+
 
 
 # Set the OLLAMA_HOST environment variable

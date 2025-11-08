@@ -18,6 +18,7 @@ import {
 } from "@mui/icons-material";
 import axios from "axios";
 import "./BedOccupancy.css";
+import API_URL from "../../services/api";
 
 const BedOccupancy = () => {
   const [wards, setWards] = useState([]);
@@ -28,7 +29,7 @@ const BedOccupancy = () => {
   useEffect(() => {
     const fetchBeds = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/beds");
+        const res = await axios.get(`${API_URL}/api/beds`);
         setWards(res.data || []);
       } catch (err) {
         console.error("Error fetching beds:", err);

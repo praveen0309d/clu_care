@@ -4,6 +4,7 @@ import "./LabDashboard.css";
 import { 
   FaEye
 } from "react-icons/fa";
+import API_URL from "../../services/api";
 
 function LabDashboard() {
   const [patientId, setPatientId] = useState("");
@@ -39,7 +40,7 @@ function LabDashboard() {
 const fetchPatientReports = async () => {
   setIsLoading(true);
   try {
-    const res = await axios.get(`http://127.0.0.1:5000/api/patients/${patientId}/lab-reports`);
+    const res = await axios.get(`${API_URL}api/patients/${patientId}/lab-reports`);
     const normalizedReports = (res.data || []).map(r => ({
       ...r,
       results: r.results || "",
@@ -57,7 +58,7 @@ const fetchPatientReports = async () => {
 
   const fetchPatientInfo = async () => {
     try {
-      const res = await axios.get(`http://127.0.0.1:5000/api/patients/${patientId}`);
+      const res = await axios.get(`${API_URL}api/patients/${patientId}`);
       setPatientInfo(res.data);
     } catch (err) {
       console.error("Error fetching patient info:", err);
@@ -84,7 +85,7 @@ const fetchPatientReports = async () => {
 
     try {
       const res = await axios.post(
-        "http://127.0.0.1:5000/api/lab-reports/add",
+        `${API_URL}api/lab-reports/add`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import API_URL from "../../services/api";
 
 const FetalSegmentation = () => {
   const [image, setImage] = useState(null);
@@ -16,7 +17,7 @@ const FetalSegmentation = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/machine/segment",
+        `${API_URL}/machine/segment`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );

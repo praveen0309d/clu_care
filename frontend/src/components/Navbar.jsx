@@ -1,10 +1,16 @@
-// Navbar.jsx
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import "./Navbar.css";
+import { 
+  Stethoscope, 
+  LogOut,
+  Menu,
+  X
+} from "lucide-react";
+import "./Navbar.css"
 
-const Navbar = () => {
+const NavigationBar = () => {
   const navigate = useNavigate();
+  const [mobileMenuActive, setMobileMenuActive] = useState(false);
   const role = localStorage.getItem("role");
   const userEmail = localStorage.getItem("email");
 
@@ -12,77 +18,83 @@ const Navbar = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     localStorage.removeItem("email");
-    navigate("/login");
+    localStorage.removeItem("userData");
+    navigate("/");
   };
-  
+
+  const toggleMobileMenu = () => {
+    setMobileMenuActive(!mobileMenuActive);
+  };
 
   // Get color based on role
   const getNavbarColor = () => {
     const roleColors = {
-      patient: "var(--patient-color)",
-      doctor: "var(--doctor-color)",
-      pharmacy: "var(--pharmacy-color)",
-      admin: "var(--admin-color)",
-      default: "var(--default-color)"
+      patient: "var(--patient-primary)",
+      doctor: "var(--doctor-primary)",
+      pharmacy: "var(--pharmacy-primary)",
+      admin: "var(--admin-primary)",
+      default: "var(--neutral-primary)"
     };
     return roleColors[role] || roleColors.default;
   };
 
   return (
-    <nav className="navbar" style={{ backgroundColor: getNavbarColor() }}>
-      <div className="brand">
-        <Link to="/" className="brand-link">🏥 CluCare</Link>
-      </div>
+    <header className="nav-header" style={{ backgroundColor: getNavbarColor() }}>
+      <div className="nav-wrapper">
+        {/* Brand Logo */}
+        <div className="nav-logo">
+          <Link to="/" className="logo-link">
+            <Stethoscope size={24} />
+            <span>CluCare</span>
+          </Link>
+        </div>
 
-      <div className="nav-content">
-        {userEmail && (
-          <div className="user-info">
-            <span className="user-role">{role?.toUpperCase()}</span>
-            <span className="user-email">{userEmail}</span>
-          </div>
-        )}
+        {/* Desktop User Section - Hidden on mobile */}
+        <div className="desktop-user-section">
+          {userEmail && (
+            <div className="user-details">
+              <span className="user-role">{role?.toUpperCase()}</span>
+              <span className="user-email">{userEmail}</span>
+            </div>
+          )}
+          <button 
+            onClick={handleLogout} 
+            className="logout-button"
+            aria-label="Logout"
+          >
+            <LogOut size={18} />
+            <span className="logout-label">Logout</span>
+          </button>
+        </div>
 
-        <div className="nav-links">
-          {role === "patient" && (
-            <>
-              <Link to="/patient/dashboard" className="nav-link">Dashboard</Link>
-              <Link to="/patient/appointments" className="nav-link">Appointments</Link>
-              <Link to="/patient/prescriptions" className="nav-link">Prescriptions</Link>
-            </>
-          )}
-          {role === "doctor" && (
-            <>
-              <Link to="/doctor/dashboard" className="nav-link">Dashboard</Link>
-              <Link to="/doctor/schedule" className="nav-link">Schedule</Link>
-              <Link to="/doctor/patients" className="nav-link">Patients</Link>
-            </>
-          )}
-          {role === "pharmacy" && (
-            <>
-              <Link to="/pharmacy/dashboard" className="nav-link">Dashboard</Link>
-              <Link to="/pharmacy/orders" className="nav-link">Orders</Link>
-              <Link to="/pharmacy/inventory" className="nav-link">Inventory</Link>
-            </>
-          )}
-          {role === "admin" && (
-            <>
-              <Link to="/admin/dashboard" className="nav-link">Dashboard</Link>
-              <Link to="/admin/users" className="nav-link">Users</Link>
-              <Link to="/admin/reports" className="nav-link">Reports</Link>
-            </>
+        {/* Mobile Logout - Always visible in top right */}
+        <button 
+          onClick={handleLogout} 
+          className="mobile-logout-icon"
+          aria-label="Logout"
+        >
+          <LogOut size={20} />
+        </button>
+
+
+
+        {/* Mobile Navigation Panel */}
+        <div className={`mobile-nav-panel ${mobileMenuActive ? 'mobile-nav-panel--active' : ''}`}>
+          {userEmail && (
+            <div className="mobile-user-info">
+              <span className="user-role-label">{role?.toUpperCase()}</span>
+              <span className="user-email-text">{userEmail}</span>
+            </div>
           )}
           
-          {role ? (
-            <button onClick={handleLogout} className="logout-btn">
-              Logout
-            </button>
-          ) : (
-            <Link to="/" className="login-link">Login / Register</Link>
-          )}
+          {/* Add your navigation links here for mobile menu */}
+
         </div>
+
+
       </div>
-    </nav>
+    </header>
   );
 };
 
-export default Navbar;
+export default NavigationBar;

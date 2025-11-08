@@ -6,6 +6,7 @@ import {
   FaSortUp, FaSortDown, FaExclamationTriangle
 } from "react-icons/fa";
 import "./ManageStock.css";
+import API_URL from "../../services/api";
 
 const ManageStock = () => {
   const [stock, setStock] = useState([]);
@@ -31,7 +32,7 @@ const ManageStock = () => {
   const fetchStock = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get("http://localhost:5000/appointments/manage-stock");
+      const response = await axios.get(`${API_URL}appointments/manage-stock`);
       setStock(response.data);
       setOriginalStock(response.data);
       checkLowStock(response.data);
@@ -65,7 +66,7 @@ const ManageStock = () => {
   // Add new stock
   const handleAdd = async () => {
     try {
-      await axios.post("http://localhost:5000/appointments/manage-stock", formData);
+      await axios.post(`${API_URL}appointments/manage-stock`, formData);
       await fetchStock();
       resetForm();
     } catch (error) {
@@ -76,7 +77,7 @@ const ManageStock = () => {
   // Update stock
   const handleUpdate = async () => {
     try {
-      await axios.put("http://localhost:5000/appointments/manage-stock", formData);
+      await axios.put(`${API_URL}appointments/manage-stock`, formData);
       await fetchStock();
       resetForm();
     } catch (error) {
@@ -88,7 +89,7 @@ const ManageStock = () => {
   const handleDelete = async (medicineId) => {
     if (window.confirm("Are you sure you want to delete this item?")) {
       try {
-        await axios.delete(`http://localhost:5000/appointments/manage-stock?medicineId=${medicineId}`);
+        await axios.delete(`${API_URL}appointments/manage-stock?medicineId=${medicineId}`);
         await fetchStock();
       } catch (error) {
         console.error("Error deleting stock:", error);
@@ -104,7 +105,7 @@ const ManageStock = () => {
     }
 
     try {
-      const response = await axios.put("http://localhost:5000/appointments/manage-stock", {
+      const response = await axios.put(`${API_URL}appointments/manage-stock`, {
         medicineId: parseInt(medicineId),
         reduceQuantity: parseInt(reduceQty[medicineId])
       });

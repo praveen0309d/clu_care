@@ -1,213 +1,239 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { 
-  FaCalendarAlt, 
-  FaClock, 
-  FaUser, 
-  FaCheck, 
-  FaTimes, 
-  FaEye,
-  FaSpinner,
-  FaExclamationTriangle,
-  FaFilter
-} from "react-icons/fa";
+  Calendar, 
+  Clock, 
+  User, 
+  Check, 
+  X, 
+  Eye,
+  Filter,
+  Loader,
+  AlertTriangle,
+  MoreVertical
+} from "lucide-react";
 import "./Appointments.css";
+import API_URL from "../../services/api";
 
 function Appointments() {
-  const [appointments, setAppointments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [filter, setFilter] = useState("all");
+  const [scheduledAppointments, setScheduledAppointments] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [currentFilter, setCurrentFilter] = useState("all");
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const doctorId = localStorage.getItem("userId");
+  const physicianId = localStorage.getItem("userId");
 
-  // Fetch appointments for this doctor
+  // Fetch physician's appointments
   useEffect(() => {
-    const fetchAppointments = async () => {
-      if (!doctorId) {
-        setError("Doctor ID not found. Please login again.");
-        setLoading(false);
+    const getPhysicianAppointments = async () => {
+      if (!physicianId) {
+        setErrorMessage("Physician ID not available. Please sign in again.");
+        setIsLoading(false);
         return;
       }
 
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/appointments/${doctorId}`
+          `${API_URL}/api/appointments/${physicianId}`
         );
-        setAppointments(response.data);
+        setScheduledAppointments(response.data);
       } catch (err) {
-        console.error("Failed to fetch appointments", err);
-        setError("Failed to fetch appointments. Please try again.");
+        console.error("Unable to load appointments", err);
+        setErrorMessage("Unable to load appointments. Please try again.");
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
-    fetchAppointments();
-  }, [doctorId]);
+    getPhysicianAppointments();
+  }, [physicianId]);
 
   // Update appointment status
-  const handleAppointmentStatus = async (appointmentId, status) => {
+  const updateAppointmentStatus = async (appointmentId, newStatus) => {
     try {
       await axios.put(
-        `http://localhost:5000/api/appointments/${appointmentId}/status`,
-        { status },
+        `${API_URL}/api/appointments/${appointmentId}/status`,
+        { status: newStatus },
         { headers: { "Content-Type": "application/json" } }
       );
 
-      // Update UI immediately
-      setAppointments((prev) =>
-        prev.map((app) =>
-          app._id === appointmentId ? { ...app, status } : app
+      // Update local state
+      setScheduledAppointments((prev) =>
+        prev.map((appointment) =>
+          appointment._id === appointmentId ? { ...appointment, status: newStatus } : appointment
         )
       );
     } catch (err) {
-      console.error("Failed to update appointment status", err);
-      alert("Failed to update appointment status");
+      console.error("Status update unsuccessful", err);
+      alert("Unable to update appointment status");
     }
   };
 
-  // Filter appointments based on status
-  const filteredAppointments = appointments.filter(app => {
-    if (filter === "all") return true;
-    return app.status === filter;
+  // Filter appointments based on current filter
+  const filteredAppointments = scheduledAppointments.filter(appointment => {
+    if (currentFilter === "all") return true;
+    return appointment.status === currentFilter;
   });
 
-  // Get status badge class
-  const getStatusClass = (status) => {
+  // Get status styling
+  const getStatusStyle = (status) => {
     switch (status) {
-      case "approved": return "status-approved";
-      case "pending": return "status-pending";
-      case "cancelled": return "status-cancelled";
-      case "completed": return "status-completed";
-      default: return "status-pending";
+      case "approved": return "schedule_status_confirmed";
+      case "pending": return "schedule_status_pending";
+      case "cancelled": return "schedule_status_cancelled";
+      case "completed": return "schedule_status_completed";
+      default: return "schedule_status_pending";
     }
   };
 
-  if (loading) return (
-    <div className="appointments-loading">
-      <FaSpinner className="spinner" />
-      <p>Loading appointments...</p>
-    </div>
-  );
+  // Open appointment details
+  const openAppointmentDetails = (appointment) => {
+    setSelectedAppointment(appointment);
+    setIsModalOpen(true);
+  };
 
-  if (error) return (
-    <div className="appointments-error">
-      <FaExclamationTriangle />
-      <p>{error}</p>
-    </div>
-  );
+  // Close modal
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedAppointment(null);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="schedule_loading_state">
+        <Loader className="schedule_loading_spinner" size={32} />
+        <p>Loading your schedule...</p>
+      </div>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <div className="schedule_error_state">
+        <AlertTriangle size={24} />
+        <p>{errorMessage}</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="appointments-container">
-      <div className="appointments-header">
-        <h2>
-          <FaCalendarAlt className="header-icon" />
-          My Appointments
-        </h2>
-        <p>Manage and track your patient appointments</p>
+    <div className="schedule_manager_container">
+      {/* Header Section */}
+      <div className="schedule_manager_header">
+        <div className="schedule_title_section">
+          <Calendar className="schedule_header_icon" size={24} />
+          <div>
+            <h1 className="schedule_main_title">Appointment Schedule</h1>
+            <p className="schedule_subtitle">Manage your patient consultations</p>
+          </div>
+        </div>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="filter-tabs">
+      {/* Statistics Overview */}
+      <div className="schedule_statistics">
+        <div className="schedule_stat_card">
+          <span className="schedule_stat_number">{scheduledAppointments.length}</span>
+          <span className="schedule_stat_label">Total Bookings</span>
+        </div>
+        <div className="schedule_stat_card schedule_stat_pending">
+          <span className="schedule_stat_number">
+            {scheduledAppointments.filter(a => a.status === "pending").length}
+          </span>
+          <span className="schedule_stat_label">Awaiting Review</span>
+        </div>
+        <div className="schedule_stat_card schedule_stat_confirmed">
+          <span className="schedule_stat_number">
+            {scheduledAppointments.filter(a => a.status === "approved").length}
+          </span>
+          <span className="schedule_stat_label">Confirmed</span>
+        </div>
+      </div>
+
+      {/* Filter Controls */}
+      <div className="schedule_filter_controls">
         <button 
-          className={`filter-tab ${filter === "all" ? "active" : ""}`}
-          onClick={() => setFilter("all")}
+          className={`schedule_filter_btn ${currentFilter === "all" ? "schedule_filter_active" : ""}`}
+          onClick={() => setCurrentFilter("all")}
         >
-          <FaFilter /> All Appointments
+          <Filter size={16} />
+          All Appointments
         </button>
         <button 
-          className={`filter-tab ${filter === "pending" ? "active" : ""}`}
-          onClick={() => setFilter("pending")}
+          className={`schedule_filter_btn ${currentFilter === "pending" ? "schedule_filter_active" : ""}`}
+          onClick={() => setCurrentFilter("pending")}
         >
-          Pending
+          Pending Review
         </button>
         <button 
-          className={`filter-tab ${filter === "approved" ? "active" : ""}`}
-          onClick={() => setFilter("approved")}
+          className={`schedule_filter_btn ${currentFilter === "approved" ? "schedule_filter_active" : ""}`}
+          onClick={() => setCurrentFilter("approved")}
         >
-          Approved
+          Confirmed
         </button>
         <button 
-          className={`filter-tab ${filter === "cancelled" ? "active" : ""}`}
-          onClick={() => setFilter("cancelled")}
+          className={`schedule_filter_btn ${currentFilter === "cancelled" ? "schedule_filter_active" : ""}`}
+          onClick={() => setCurrentFilter("cancelled")}
         >
           Cancelled
         </button>
         <button 
-          className={`filter-tab ${filter === "completed" ? "active" : ""}`}
-          onClick={() => setFilter("completed")}
+          className={`schedule_filter_btn ${currentFilter === "completed" ? "schedule_filter_active" : ""}`}
+          onClick={() => setCurrentFilter("completed")}
         >
           Completed
         </button>
       </div>
 
-      {/* Appointments Count */}
-      <div className="appointments-stats">
-        <div className="stat-card">
-          <span className="stat-number">{appointments.length}</span>
-          <span className="stat-label">Total</span>
-        </div>
-        <div className="stat-card pending">
-          <span className="stat-number">
-            {appointments.filter(a => a.status === "pending").length}
-          </span>
-          <span className="stat-label">Pending</span>
-        </div>
-        <div className="stat-card approved">
-          <span className="stat-number">
-            {appointments.filter(a => a.status === "approved").length}
-          </span>
-          <span className="stat-label">Approved</span>
-        </div>
-      </div>
-
       {/* Appointments List */}
-      <div className="appointments-list">
+      <div className="schedule_appointments_list">
         {filteredAppointments.length === 0 ? (
-          <div className="empty-state">
-            <FaCalendarAlt size={48} />
-            <h3>No Appointments Found</h3>
-            <p>{filter === "all" 
-              ? "You don't have any appointments yet." 
-              : `No ${filter} appointments found.`}
+          <div className="schedule_empty_state">
+            <Calendar size={48} className="schedule_empty_icon" />
+            <h3>No Appointments Available</h3>
+            <p>
+              {currentFilter === "all" 
+                ? "You don't have any scheduled appointments." 
+                : `No ${currentFilter} appointments found.`}
             </p>
           </div>
         ) : (
           filteredAppointments.map((appointment) => (
-            <div key={appointment._id} className="appointment-card">
-              <div className="appointment-header">
-                <div className="patient-info">
-                  <h3>
-                    <FaUser className="info-icon" />
-                    Patient ID: {appointment.patientId}
-                  </h3>
-                  {appointment.patientName && (
-                    <p className="patient-name">{appointment.patientName}</p>
-                  )}
+            <div key={appointment._id} className="schedule_appointment_card">
+              <div className="schedule_card_header">
+                <div className="schedule_patient_info">
+                  <div className="schedule_patient_identity">
+                    <User className="schedule_info_icon" size={18} />
+                    <div>
+                      <h3 className="schedule_patient_id">Patient ID: {appointment.patientId}</h3>
+                      {appointment.patientName && (
+                        <p className="schedule_patient_name">{appointment.patientName}</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className={`status-badge ${getStatusClass(appointment.status)}`}>
+                <div className={`schedule_status_badge ${getStatusStyle(appointment.status)}`}>
                   {appointment.status}
                 </div>
               </div>
 
-              <div className="appointment-details">
-                <div className="detail-item">
-                  <FaCalendarAlt className="detail-icon" />
-                  <span>
+              <div className="schedule_appointment_details">
+                <div className="schedule_detail_row">
+                  <Calendar className="schedule_detail_icon" size={16} />
+                  <span className="schedule_detail_text">
                     {new Date(appointment.date).toLocaleDateString('en-US', {
-                      weekday: 'long',
+                      weekday: 'short',
                       year: 'numeric',
-                      month: 'long',
+                      month: 'short',
                       day: 'numeric'
                     })}
                   </span>
                 </div>
                 
-                <div className="detail-item">
-                  <FaClock className="detail-icon" />
-                  <span>
+                <div className="schedule_detail_row">
+                  <Clock className="schedule_detail_icon" size={16} />
+                  <span className="schedule_detail_text">
                     {new Date(appointment.date).toLocaleTimeString('en-US', {
                       hour: '2-digit',
                       minute: '2-digit'
@@ -216,117 +242,144 @@ function Appointments() {
                 </div>
 
                 {appointment.description && (
-                  <div className="detail-item">
-                    <p className="appointment-description">
-                      <strong>Reason:</strong> {appointment.description}
+                  <div className="schedule_description">
+                    <p className="schedule_reason_text">
+                      <strong>Consultation Reason:</strong> {appointment.description}
                     </p>
                   </div>
                 )}
               </div>
 
-<div className="appointment-actions-container">
-  {appointment.status === "pending" && (
-    <>
-      <button
-        className="appointment-approve-button"
-        onClick={() => handleAppointmentStatus(appointment._id, "approved")}
-      >
-        <FaCheck /> Approve
-      </button>
-      <button
-        className="appointment-cancel-button"
-        onClick={() => handleAppointmentStatus(appointment._id, "cancelled")}
-      >
-        <FaTimes /> Cancel
-      </button>
-    </>
-  )}
-  
-  {appointment.status === "approved" && (
-    <button
-      className="appointment-complete-button"
-      onClick={() => handleAppointmentStatus(appointment._id, "completed")}
-    >
-      <FaCheck /> Mark Complete
-    </button>
-  )}
+              <div className="schedule_action_buttons">
+                {appointment.status === "pending" && (
+                  <>
+                    <button
+                      className="schedule_action_btn schedule_approve_btn"
+                      onClick={() => updateAppointmentStatus(appointment._id, "approved")}
+                    >
+                      <Check size={16} />
+                      Approve
+                    </button>
+                    <button
+                      className="schedule_action_btn schedule_cancel_btn"
+                      onClick={() => updateAppointmentStatus(appointment._id, "cancelled")}
+                    >
+                      <X size={16} />
+                      Decline
+                    </button>
+                  </>
+                )}
+                
+                {appointment.status === "approved" && (
+                  <button
+                    className="schedule_action_btn schedule_complete_btn"
+                    onClick={() => updateAppointmentStatus(appointment._id, "completed")}
+                  >
+                    <Check size={16} />
+                    Mark Completed
+                  </button>
+                )}
 
-  <button
-    className="appointment-details-button"
-    onClick={() => setSelectedAppointment(appointment)}
-  >
-    <FaEye /> Details
-  </button>
-</div>
+                <button
+                  className="schedule_action_btn schedule_details_btn"
+                  onClick={() => openAppointmentDetails(appointment)}
+                >
+                  <Eye size={16} />
+                  View Details
+                </button>
+              </div>
             </div>
           ))
         )}
       </div>
 
-      {/* Appointment Detail Modal */}
-      {selectedAppointment && (
-        <div className="modal-overlay" onClick={() => setSelectedAppointment(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Appointment Details</h3>
+      {/* Appointment Details Modal */}
+      {isModalOpen && selectedAppointment && (
+        <div className="schedule_modal_overlay" onClick={closeModal}>
+          <div className="schedule_modal_content" onClick={(e) => e.stopPropagation()}>
+            <div className="schedule_modal_header">
+              <h2 className="schedule_modal_title">Appointment Details</h2>
               <button 
-                className="close-btn"
-                onClick={() => setSelectedAppointment(null)}
+                className="schedule_modal_close"
+                onClick={closeModal}
               >
-                <FaTimes />
+                <X size={20} />
               </button>
             </div>
             
-            <div className="modal-body">
-              <div className="detail-section">
-                <h4>Patient Information</h4>
-                <p><strong>Patient ID:</strong> {selectedAppointment.patientId}</p>
-                {selectedAppointment.patientName && (
-                  <p><strong>Name:</strong> {selectedAppointment.patientName}</p>
-                )}
+            <div className="schedule_modal_body">
+              <div className="schedule_modal_section">
+                <h3 className="schedule_modal_section_title">Patient Information</h3>
+                <div className="schedule_modal_details">
+                  <div className="schedule_modal_detail">
+                    <span className="schedule_modal_label">Patient ID:</span>
+                    <span className="schedule_modal_value">{selectedAppointment.patientId}</span>
+                  </div>
+                  {selectedAppointment.patientName && (
+                    <div className="schedule_modal_detail">
+                      <span className="schedule_modal_label">Patient Name:</span>
+                      <span className="schedule_modal_value">{selectedAppointment.patientName}</span>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="detail-section">
-                <h4>Appointment Details</h4>
-                <p><strong>Date:</strong> {new Date(selectedAppointment.date).toLocaleDateString()}</p>
-                <p><strong>Time:</strong> {new Date(selectedAppointment.date).toLocaleTimeString()}</p>
-                <p><strong>Status:</strong> 
-                  <span className={`status-badge ${getStatusClass(selectedAppointment.status)}`}>
-                    {selectedAppointment.status}
-                  </span>
-                </p>
+              <div className="schedule_modal_section">
+                <h3 className="schedule_modal_section_title">Appointment Information</h3>
+                <div className="schedule_modal_details">
+                  <div className="schedule_modal_detail">
+                    <span className="schedule_modal_label">Scheduled Date:</span>
+                    <span className="schedule_modal_value">
+                      {new Date(selectedAppointment.date).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div className="schedule_modal_detail">
+                    <span className="schedule_modal_label">Scheduled Time:</span>
+                    <span className="schedule_modal_value">
+                      {new Date(selectedAppointment.date).toLocaleTimeString()}
+                    </span>
+                  </div>
+                  <div className="schedule_modal_detail">
+                    <span className="schedule_modal_label">Current Status:</span>
+                    <span className={`schedule_status_badge ${getStatusStyle(selectedAppointment.status)}`}>
+                      {selectedAppointment.status}
+                    </span>
+                  </div>
+                </div>
               </div>
 
               {selectedAppointment.description && (
-                <div className="detail-section">
-                  <h4>Description</h4>
-                  <p>{selectedAppointment.description}</p>
+                <div className="schedule_modal_section">
+                  <h3 className="schedule_modal_section_title">Consultation Details</h3>
+                  <p className="schedule_modal_description">{selectedAppointment.description}</p>
                 </div>
               )}
             </div>
 
-            <div className="modal-footer">
+            <div className="schedule_modal_footer">
               {selectedAppointment.status === "pending" && (
-                <>
+                <div className="schedule_modal_actions">
                   <button
-                    className="action-btn approve-btn"
+                    className="schedule_modal_btn schedule_modal_approve"
                     onClick={() => {
-                      handleAppointmentStatus(selectedAppointment._id, "approved");
-                      setSelectedAppointment(null);
+                      updateAppointmentStatus(selectedAppointment._id, "approved");
+                      closeModal();
                     }}
                   >
-                    <FaCheck /> Approve
+                    <Check size={16} />
+                    Approve Appointment
                   </button>
                   <button
-                    className="action-btn cancel-btn"
+                    className="schedule_modal_btn schedule_modal_cancel"
                     onClick={() => {
-                      handleAppointmentStatus(selectedAppointment._id, "cancelled");
-                      setSelectedAppointment(null);
+                      updateAppointmentStatus(selectedAppointment._id, "cancelled");
+                      closeModal();
                     }}
                   >
-                    <FaTimes /> Cancel
+                    <X size={16} />
+                    Cancel Appointment
                   </button>
-                </>
+                </div>
               )}
             </div>
           </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Emergency.css';
 import axios from 'axios';
+import API_URL from '../../services/api';
 
 const Emergency = () => {
   const [patients, setPatients] = useState([]);
@@ -25,7 +26,7 @@ const Emergency = () => {
   const fetchPatients = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('http://localhost:5000/api/patients');
+      const res = await axios.get(`${API_URL}/api/patients`);
       setPatients(res.data);
     } catch (err) {
       console.error('Error fetching patients:', err);
@@ -37,7 +38,7 @@ const Emergency = () => {
   // Fetch departments
   const fetchDepartments = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/departments');
+      const res = await axios.get(`${API_URL}/api/departments`);
       setDepartments(res.data);
     } catch (err) {
       console.error('Error fetching departments:', err);
@@ -53,7 +54,7 @@ const Emergency = () => {
       }
       try {
         const res = await axios.get(
-          `http://localhost:5000/staff/available?specialty=${formData.medicalSpecialty}`
+          `${API_URL}/staff/available?specialty=${formData.medicalSpecialty}`
         );
         setAvailableDoctors(res.data);
       } catch (err) {
@@ -85,7 +86,7 @@ const Emergency = () => {
         status: 'admitted'
       };
 
-      await axios.post('http://localhost:5000/api/patients', patientData);
+      await axios.post(`${API_URL}/api/patients`, patientData);
 
       // Reset form and close
       setShowAddForm(false);

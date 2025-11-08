@@ -10,6 +10,7 @@ import {
   FaPlus
 } from "react-icons/fa";
 import './StaffTable.css';
+import API_URL from '../../services/api';
 
 const StaffTable = () => {
   const [staff, setStaff] = useState({
@@ -42,7 +43,7 @@ const StaffTable = () => {
   // Fetch staff list
 const fetchStaff = async () => {
   try {
-    const res = await fetch("http://127.0.0.1:5000/api/staff");
+    const res = await fetch(`${API_URL}/api/staff`);
     const data = await res.json();
 
     // Group staff by role
@@ -62,7 +63,7 @@ const fetchStaff = async () => {
   // Fetch departments
   const fetchDepartments = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:5000/api/departments");
+      const res = await fetch(`${API_URL}/api/departments`);
       const data = await res.json();
       setDepartments(data);
     } catch (err) {
@@ -104,9 +105,10 @@ const fetchStaff = async () => {
     setLoading(true);
 
     try {
-      const url = editingId
-        ? `http://127.0.0.1:5000/api/staff/${editingId}`
-        : `http://127.0.0.1:5000/api/staff`;
+const url = editingId
+  ? `${API_URL}/api/staff/${editingId}`
+  : `${API_URL}/api/staff`;
+
 
       const method = editingId ? "PUT" : "POST";
 
@@ -151,7 +153,7 @@ const fetchStaff = async () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this staff member?")) return;
     try {
-      await fetch(`http://127.0.0.1:5000/api/staff/${id}`, { method: "DELETE" });
+      await fetch(`${API_URL}/api/staff/${id}`, { method: "DELETE" });
       fetchStaff();
     } catch (error) {
       console.error("Error deleting staff:", error);

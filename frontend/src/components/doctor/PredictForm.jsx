@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import "./FetusPredictor.css";
+import API_URL from "../../services/api";
 
 const FetusPredictor = () => {
   const [image, setImage] = useState(null);
@@ -29,7 +30,7 @@ const FetusPredictor = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/machine/predict",
+        `${API_URL}/machine/predict`,
         formData,
         { 
           headers: { "Content-Type": "multipart/form-data" },

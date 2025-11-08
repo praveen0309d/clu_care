@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { FaSearch, FaPlus, FaPrint, FaEye, FaFileMedical, FaTimes } from "react-icons/fa";
 import "./ViewPrescriptions.css";
+import API_URL from "../../services/api";
 
 const ViewPrescriptions = () => {
   const [prescriptions, setPrescriptions] = useState([]);
@@ -14,7 +15,7 @@ const ViewPrescriptions = () => {
   useEffect(() => {
     const fetchPrescriptions = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:5000/api/all-prescriptions");
+        const res = await fetch(`${API_URL}api/all-prescriptions`);
         if (!res.ok) throw new Error("Failed to fetch prescriptions");
         const data = await res.json();
         setPrescriptions(data);

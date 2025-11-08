@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./OverviewCards.css";
 import axios from "axios";
+import API_URL from "../../services/api";
 
 const OverviewCards = () => {
   const [stats, setStats] = useState(null);
@@ -9,7 +10,7 @@ const OverviewCards = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/dashboard/stats");
+        const res = await axios.get(`${API_URL}api/dashboard/stats`);
         setStats(res.data);
       } catch (err) {
         console.error("Error fetching stats:", err);

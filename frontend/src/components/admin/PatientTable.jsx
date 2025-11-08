@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './PatientTable.css';
+import API_URL from '../../services/api';
 
 const PatientTable = ({ showAddForm = true }) => {
   const [patients, setPatients] = useState([]);
@@ -31,7 +32,7 @@ const PatientTable = ({ showAddForm = true }) => {
   // Fetch departments
   const fetchDepartments = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/departments');
+      const res = await fetch(`${API_URL}/api/departments`);
       const data = await res.json();
       setDepartments(data);
     } catch (err) {
@@ -42,7 +43,8 @@ const PatientTable = ({ showAddForm = true }) => {
   // Fetch patients
   const fetchPatients = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/patients');
+      const res = await fetch(`${API_URL}/api/patients`);
+
       const data = await res.json();
       setPatients(data);
     } catch (err) {
@@ -64,7 +66,7 @@ const PatientTable = ({ showAddForm = true }) => {
       }
       try {
         const res = await fetch(
-          `http://localhost:5000/staff/available?specialty=${formData.medicalSpecialty}`
+          `${API_URL}/staff/available?specialty=${formData.medicalSpecialty}`
         );
         const data = await res.json();
         setAvailableDoctors(data);

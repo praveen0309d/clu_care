@@ -1,139 +1,167 @@
 import React from "react";
-import './PatientProfile.css'
-const PatientProfile = ({ patient }) => {
-  if (!patient) return <div className="profile-error">No profile data available.</div>;
+import { 
+  User, 
+  Calendar, 
+  Phone, 
+  Mail, 
+  MapPin, 
+  AlertTriangle,
+  Droplet,
+  Stethoscope,
+  Hospital,
+  Clipboard,
+  HeartPulse
+} from "lucide-react";
+import './PatientProfile.css';
 
-  // Get status color based on patient status
-  const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'stable': return '#10B981';
-      case 'critical': return '#EF4444';
-      case 'recovering': return '#F59E0B';
-      case 'observation': return '#3B82F6';
-      default: return '#6B7280';
-    }
-  };
+const PatientProfile = ({ patient }) => {
+  if (!patient) return <div className="data-missing-alert">No patient records found.</div>;
 
   return (
-    <div className="patient-profile-container">
-      <div className="profile-header">
-        <div className="profile-avatar">
-          {patient.name ? patient.name.charAt(0).toUpperCase() : 'P'}
-        </div>
-        <div className="profile-title">
-          <h2>{patient.name}</h2>
-          <p>Patient Profile</p>
-        </div>
-        <div 
-          className="profile-status"
-          style={{ backgroundColor: getStatusColor(patient.status) }}
-        >
-          {patient.status || 'Unknown Status'}
-        </div>
-      </div>
-
-      <div className="profile-content">
-        <div className="profile-section">
-          <h3>Personal Information</h3>
-          <div className="info-grid">
-            <div className="info-item">
-              <span className="info-label">Patient ID</span>
-              <span className="info-value">{patient.patientId || 'N/A'}</span>
+    <div className="health-record-container">
+      {/* Personal Details Panel */}
+      <section className="data-panel">
+        <header className="panel-heading">
+          <User className="panel-icon" size={18} />
+          <h3 className="panel-title">Personal Information</h3>
+        </header>
+        <div className="panel-body">
+          <div className="field-grid">
+            <div className="field-item">
+              <span className="field-name">Gender</span>
+              <span className="field-data">{patient.gender || 'Not specified'}</span>
             </div>
-            <div className="info-item">
-              <span className="info-label">Age</span>
-              <span className="info-value">{patient.age || 'N/A'}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">Gender</span>
-              <span className="info-value">{patient.gender || 'N/A'}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">Type</span>
-              <span className="info-value">{patient.type || 'N/A'}</span>
+            <div className="field-item">
+              <span className="field-name">Patient Type</span>
+              <span className="field-data">{patient.type || 'Not specified'}</span>
             </div>
           </div>
         </div>
+      </section>
 
-        <div className="profile-section">
-          <h3>Medical Details</h3>
-          <div className="info-grid">
-            <div className="info-item">
-              <span className="info-label">Medical Specialty</span>
-              <span className="info-value">{patient.medicalSpecialty || 'N/A'}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">Ward Number</span>
-              <span className="info-value">{patient.wardNumber || 'N/A'}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">Cart Number</span>
-              <span className="info-value">{patient.cartNumber || 'N/A'}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">Admission Date</span>
-              <span className="info-value">{patient.admissionDate || 'N/A'}</span>
-            </div>
-          </div>
-        </div>
-
-        {patient.bloodGroup && (
-          <div className="profile-section">
-            <h3>Health Information</h3>
-            <div className="info-grid">
-              <div className="info-item">
-                <span className="info-label">Blood Group</span>
-                <span className="info-value">{patient.bloodGroup}</span>
+      {/* Clinical Information Panel */}
+      <section className="data-panel">
+        <header className="panel-heading">
+          <Hospital className="panel-icon" size={18} />
+          <h3 className="panel-title">Clinical Details</h3>
+        </header>
+        <div className="panel-body">
+          <div className="field-grid">
+            {patient.medicalSpecialty && (
+              <div className="field-item">
+                <span className="field-name">Medical Specialty</span>
+                <span className="field-data">{patient.medicalSpecialty}</span>
               </div>
+            )}
+            {patient.wardNumber && (
+              <div className="field-item">
+                <Hospital size={16} className="field-icon" />
+                <span className="field-name">Ward Number</span>
+                <span className="field-data">{patient.wardNumber}</span>
+              </div>
+            )}
+            {patient.cartNumber && (
+              <div className="field-item">
+                <Clipboard size={16} className="field-icon" />
+                <span className="field-name">Cart Number</span>
+                <span className="field-data">{patient.cartNumber}</span>
+              </div>
+            )}
+            {patient.admissionDate && (
+              <div className="field-item">
+                <Calendar size={16} className="field-icon" />
+                <span className="field-name">Admission Date</span>
+                <span className="field-data">{patient.admissionDate}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Health Metrics Panel */}
+      {(patient.bloodGroup || patient.allergies || patient.conditions) && (
+        <section className="data-panel">
+          <header className="panel-heading">
+            <HeartPulse className="panel-icon" size={18} />
+            <h3 className="panel-title">Health Metrics</h3>
+          </header>
+          <div className="panel-body">
+            <div className="field-grid">
+              {patient.bloodGroup && (
+                <div className="field-item">
+                  <Droplet size={16} className="field-icon" />
+                  <span className="field-name">Blood Type</span>
+                  <span className="field-data">{patient.bloodGroup}</span>
+                </div>
+              )}
               {patient.allergies && (
-                <div className="info-item">
-                  <span className="info-label">Allergies</span>
-                  <span className="info-value">{patient.allergies}</span>
+                <div className="field-item">
+                  <AlertTriangle size={16} className="field-icon" />
+                  <span className="field-name">Allergies</span>
+                  <span className="field-data">{patient.allergies}</span>
                 </div>
               )}
               {patient.conditions && (
-                <div className="info-item">
-                  <span className="info-label">Medical Conditions</span>
-                  <span className="info-value">{patient.conditions}</span>
+                <div className="field-item">
+                  <Stethoscope size={16} className="field-icon" />
+                  <span className="field-name">Medical Conditions</span>
+                  <span className="field-data">{patient.conditions}</span>
                 </div>
               )}
             </div>
           </div>
-        )}
+        </section>
+      )}
 
-        {patient.contact && (
-          <div className="profile-section">
-            <h3>Contact Information</h3>
-            <div className="info-grid">
+      {/* Contact Details Panel */}
+      {patient.contact && (
+        <section className="data-panel">
+          <header className="panel-heading">
+            <Phone className="panel-icon" size={18} />
+            <h3 className="panel-title">Contact Details</h3>
+          </header>
+          <div className="panel-body">
+            <div className="contact-list">
               {patient.contact.phone && (
-                <div className="info-item">
-                  <span className="info-label">Phone</span>
-                  <span className="info-value">{patient.contact.phone}</span>
+                <div className="contact-entry">
+                  <Phone size={16} className="contact-symbol" />
+                  <div className="contact-info">
+                    <span className="contact-category">Phone Number</span>
+                    <span className="contact-detail">{patient.contact.phone}</span>
+                  </div>
                 </div>
               )}
               {patient.contact.email && (
-                <div className="info-item">
-                  <span className="info-label">Email</span>
-                  <span className="info-value">{patient.contact.email}</span>
+                <div className="contact-entry">
+                  <Mail size={16} className="contact-symbol" />
+                  <div className="contact-info">
+                    <span className="contact-category">Email Address</span>
+                    <span className="contact-detail">{patient.contact.email}</span>
+                  </div>
                 </div>
               )}
               {patient.contact.address && (
-                <div className="info-item">
-                  <span className="info-label">Address</span>
-                  <span className="info-value">{patient.contact.address}</span>
+                <div className="contact-entry">
+                  <MapPin size={16} className="contact-symbol" />
+                  <div className="contact-info">
+                    <span className="contact-category">Home Address</span>
+                    <span className="contact-detail">{patient.contact.address}</span>
+                  </div>
                 </div>
               )}
               {patient.contact.emergencyContact && (
-                <div className="info-item">
-                  <span className="info-label">Emergency Contact</span>
-                  <span className="info-value">{patient.contact.emergencyContact}</span>
+                <div className="contact-entry">
+                  <AlertTriangle size={16} className="contact-symbol" />
+                  <div className="contact-info">
+                    <span className="contact-category">Emergency Contact</span>
+                    <span className="contact-detail">{patient.contact.emergencyContact}</span>
+                  </div>
                 </div>
               )}
             </div>
           </div>
-        )}
-      </div>
-
+        </section>
+      )}
     </div>
   );
 };

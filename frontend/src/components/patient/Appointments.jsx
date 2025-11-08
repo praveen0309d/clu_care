@@ -2,89 +2,102 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
+import { 
+  Calendar, 
+  Clock, 
+  User, 
+  Stethoscope, 
+  Plus,
+  Search,
+  ChevronDown,
+  ChevronUp
+} from "lucide-react";
 import "./Appointment.css";
 import API_URL from "../../services/api";
+
 const Appointment = () => {
-  const [activeTab, setActiveTab] = useState("myAppointments");
-  const [departments, setDepartments] = useState([]);
-  const [availableDoctors, setAvailableDoctors] = useState([]);
-  const [appointments, setAppointments] = useState([]);
-  const [formData, setFormData] = useState({
+  const [currentView, setCurrentView] = useState("myBookings");
+  const [specialties, setSpecialties] = useState([]);
+  const [doctorList, setDoctorList] = useState([]);
+  const [bookingList, setBookingList] = useState([]);
+  const [bookingForm, setBookingForm] = useState({
     medicalSpecialty: "",
     doctorId: "",
     date: "",
     description: "",
     notes: ""
   });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [expandedBooking, setExpandedBooking] = useState(null);
 
-  const token = localStorage.getItem("authToken");
-  const user = JSON.parse(localStorage.getItem("userData"));
+  const authToken = localStorage.getItem("authToken");
+  const userData = JSON.parse(localStorage.getItem("userData"));
 
-  // Fetch departments
-  const fetchDepartments = async () => {
+  // Fetch medical specialties
+  const getSpecialties = async () => {
     try {
-      const res = await axios.get(`${API_URL}/appointments/departments`, {
-        headers: { Authorization: `Bearer ${token}` }
+      const response = await axios.get(`${API_URL}/appointments/departments`, {
+        headers: { Authorization: `Bearer ${authToken}` }
       });
-      setDepartments(res.data);
+      setSpecialties(response.data);
     } catch (err) {
-      console.error("Error fetching departments:", err);
+      console.error("Error loading specialties:", err);
     }
   };
 
   // Fetch available doctors when specialty changes
   useEffect(() => {
-    const fetchDoctors = async () => {
-      if (!formData.medicalSpecialty) {
-        setAvailableDoctors([]);
+    const getDoctors = async () => {
+      if (!bookingForm.medicalSpecialty) {
+        setDoctorList([]);
         return;
       }
       try {
-        const res = await axios.get(
-          `http://localhost:5000/appointments/staff/available?specialty=${formData.medicalSpecialty}`,
-          { headers: { Authorization: `Bearer ${token}` } }
+        const response = await axios.get(
+          `${API_URL}/appointments/staff/available?specialty=${bookingForm.medicalSpecialty}`,
+          { headers: { Authorization: `Bearer ${authToken}` } }
         );
-        setAvailableDoctors(res.data);
+        setDoctorList(response.data);
       } catch (err) {
-        console.error("Error fetching doctors:", err);
+        console.error("Error loading doctors:", err);
       }
     };
-    fetchDoctors();
-  }, [formData.medicalSpecialty, token]);
+    getDoctors();
+  }, [bookingForm.medicalSpecialty, authToken]);
 
-  // Fetch patient's appointments
-  const fetchAppointments = async () => {
-    if (!user || !user.patientId) return;
+  // Fetch user's bookings
+  const getUserBookings = async () => {
+    if (!userData || !userData.patientId) return;
     try {
-      const res = await axios.get(
-        `${API_URL}/appointments/mine/${user.patientId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+      const response = await axios.get(
+        `${API_URL}/appointments/mine/${userData.patientId}`,
+        { headers: { Authorization: `Bearer ${authToken}` } }
       );
-      setAppointments(res.data);
+      setBookingList(response.data);
     } catch (err) {
-      console.error("Error fetching appointments:", err);
+      console.error("Error loading bookings:", err);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchDepartments();
-    fetchAppointments();
+    getSpecialties();
+    getUserBookings();
   }, []);
 
-  // Handle form input change
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  // Handle form input changes
+  const handleInputChange = (e) => {
+    setBookingForm({ ...bookingForm, [e.target.name]: e.target.value });
   };
 
-  // Submit new appointment
-  const handleSubmit = async (e) => {
+  // Submit new booking request
+  const handleBookingSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.doctorId || !formData.date) {
-      alert("Please select a doctor and date");
+    if (!bookingForm.doctorId || !bookingForm.date) {
+      toast.error("Please select both doctor and appointment time");
       return;
     }
 
@@ -92,177 +105,311 @@ const Appointment = () => {
       await axios.post(
         `${API_URL}/appointments/add`,
         {
-          patientId: user.patientId,
-          doctorId: formData.doctorId,
-          date: formData.date,
-          description: formData.description,
-          notes: formData.notes
+          patientId: userData.patientId,
+          doctorId: bookingForm.doctorId,
+          date: bookingForm.date,
+          description: bookingForm.description,
+          notes: bookingForm.notes
         },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${authToken}` } }
       );
-      alert("Appointment requested successfully!");
       
-      setFormData({
+      toast.success("Appointment requested successfully!");
+      setBookingForm({
         medicalSpecialty: "",
         doctorId: "",
         date: "",
         description: "",
         notes: ""
       });
-      fetchAppointments(); // refresh the list
-      setActiveTab("myAppointments");
+      getUserBookings();
+      setCurrentView("myBookings");
     } catch (err) {
-      console.error("Error adding appointment:", err);
-      alert("Failed to request appointment. Try again.");
+      console.error("Error creating booking:", err);
+      toast.error("Failed to submit appointment request");
     }
   };
 
-  // Function to determine status class
-  const getStatusClass = (status) => {
-    switch (status.toLowerCase()) {
-      case "pending":
-        return "status-pending";
-      case "approved":
-        return "status-approved";
-      case "cancelled":
-        return "status-cancelled";
-      case "completed":
-        return "status-completed";
-      default:
-        return "status-pending";
-    }
+  // Filter bookings based on search and status
+  const filteredBookings = bookingList.filter(booking => {
+    const matchesSearch = booking.doctorName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         booking.department?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || booking.status?.toLowerCase() === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  // Toggle booking details
+  const toggleBookingDetails = (bookingId) => {
+    setExpandedBooking(expandedBooking === bookingId ? null : bookingId);
   };
 
-  if (loading) return <div className="loading">Loading appointments...</div>;
-  if (error) return <div className="error-message">{error}</div>;
+  // Format date for display
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return {
+      date: date.toLocaleDateString('en-US', { 
+        weekday: 'short', 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      }),
+      time: date.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      })
+    };
+  };
+
+  if (isLoading) {
+    return (
+      <div className="appoint_Pa_loadingContainer">
+        <div className="appoint_Pa_loadingSpinner"></div>
+        <p>Loading your appointments...</p>
+      </div>
+    );
+  }
 
   return (
-    
-    <div className="appointment-container">
-      
-      {/* Sidebar */}
-      <nav className="appointment-sidebar">
-        <h2>Appointments</h2>
+    <div className="appoint_Pa_dashboard">
+      {/* Header */}
+      <header className="appoint_Pa_header">
+        <div className="appoint_Pa_headerContent">
+          <h1>Appointments</h1>
+          <p>Manage your medical appointments</p>
+        </div>
         <button 
-          className={`sidebar-btn ${activeTab === "myAppointments" ? "active" : ""}`}
-          onClick={() => setActiveTab("myAppointments")}
+          className="appoint_Pa_primaryBtn appoint_Pa_newAppointmentBtn"
+          onClick={() => setCurrentView("newBooking")}
         >
-          My Appointments
+          <Plus size={18} />
+          New Appointment
         </button>
-        <button 
-          className={`sidebar-btn ${activeTab === "addAppointment" ? "active" : ""}`}
-          onClick={() => setActiveTab("addAppointment")}
-        >
-          Add Appointment
-        </button>
-      </nav>
+      </header>
 
       {/* Main Content */}
-      <div className="appointment-content">
-        {activeTab === "myAppointments" && (
-          <div>
-            <h2 className="section-title">My Appointments</h2>
-            {appointments.length === 0 ? (
-              <p className="no-appointments">No appointments found.</p>
-            ) : (
-              <div className="appointments-grid">
-                {appointments.map((appointment) => (
-                  <div key={appointment._id} className="appointment-card">
-                    <div className={`appointment-status ${getStatusClass(appointment.status)}`}>
-                      {appointment.status}
-                    </div>
-                    <div className="appointment-doctor">{appointment.doctorName}</div>
-                    <div className="appointment-department">{appointment.department}</div>
-                    <div className="appointment-date">{new Date(appointment.date).toLocaleString()}</div>
-                    <div className="appointment-description">{appointment.description}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === "addAppointment" && (
-          <div>
-            <h2 className="section-title">Request New Appointment</h2>
-            <form className="appointment-form" onSubmit={handleSubmit}>
-              <div className="patien_form">
-                <label htmlFor="medicalSpecialty">Specialty:</label>
-                <select
-                  id="medicalSpecialty"
-                  name="medicalSpecialty"
-                  value={formData.medicalSpecialty}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Select Specialty</option>
-                  {departments.map((dept) => (
-                    <option key={dept} value={dept}>
-                      {dept}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="patien_form">
-                <label htmlFor="doctorId">Doctor:</label>
-                <select
-                  id="doctorId"
-                  name="doctorId"
-                  value={formData.doctorId}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Select Doctor</option>
-                  {availableDoctors.map((doc) => (
-                    <option key={doc._id} value={doc._id}>
-                      {doc.name} ({doc.specialization})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="patien_form">
-                <label htmlFor="date">Date:</label>
+      <div className="appoint_Pa_content">
+        {currentView === "myBookings" ? (
+          <div className="appoint_Pa_bookingsView">
+            {/* Controls */}
+            <div className="appoint_Pa_controlsBar">
+              <div className="appoint_Pa_searchBox">
+                <Search size={18} />
                 <input
-                  id="date"
-                  type="datetime-local"
-                  name="date"
-                  value={formData.date}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="patien_form">
-                <label htmlFor="description">Description:</label>
-                <input
-                  id="description"
                   type="text"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  placeholder="Brief description of your issue"
+                  placeholder="Search appointments..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
+              
+              <select 
+                className="appoint_Pa_filterSelect"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Confirmed</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
 
-              <div className="patien_form">
-                <label htmlFor="notes">Notes:</label>
-                <textarea
-                  id="notes"
-                  name="notes"
-                  value={formData.notes}
-                  onChange={handleChange}
-                  placeholder="Any additional notes for the doctor"
-                />
+            {/* Appointments List */}
+            <div className="appoint_Pa_appointmentsContainer">
+              {filteredBookings.length === 0 ? (
+                <div className="appoint_Pa_emptyState">
+                  <Calendar size={48} className="appoint_Pa_emptyIcon" />
+                  <h3>No appointments found</h3>
+                  <p>You don't have any appointments scheduled yet.</p>
+                  <button 
+                    className="appoint_Pa_primaryBtn"
+                    onClick={() => setCurrentView("newBooking")}
+                  >
+                    Schedule Your First Appointment
+                  </button>
+                </div>
+              ) : (
+                <div className="appoint_Pa_appointmentsList">
+                  {filteredBookings.map((booking) => {
+                    const formattedDate = formatDate(booking.date);
+                    return (
+                      <div key={booking._id} className="appoint_Pa_appointmentItem">
+                        <div 
+                          className="appoint_Pa_appointmentHeader"
+                          onClick={() => toggleBookingDetails(booking._id)}
+                        >
+                          <div className="appoint_Pa_appointmentMainInfo">
+                            <div className="appoint_Pa_doctorAvatar">
+                              <User size={20} />
+                            </div>
+                            <div className="appoint_Pa_appointmentDetails">
+                              <h4 className="appoint_Pa_doctorName">{booking.doctorName}</h4>
+                              <p className="appoint_Pa_department">{booking.department}</p>
+                              <div className="appoint_Pa_appointmentMeta">
+                                <span className="appoint_Pa_date">
+                                  <Calendar size={14} />
+                                  {formattedDate.date}
+                                </span>
+                                <span className="appoint_Pa_time">
+                                  <Clock size={14} />
+                                  {formattedDate.time}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="appoint_Pa_appointmentActions">
+                            <div className={`appoint_Pa_statusBadge appoint_Pa_status_${booking.status?.toLowerCase()}`}>
+                              {booking.status}
+                            </div>
+                            {expandedBooking === booking._id ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                          </div>
+                        </div>
+
+                        {expandedBooking === booking._id && (
+                          <div className="appoint_Pa_appointmentExpanded">
+                            <div className="appoint_Pa_expandedDetails">
+                              {booking.description && (
+                                <div className="appoint_Pa_detailRow">
+                                  <label>Reason for visit:</label>
+                                  <span>{booking.description}</span>
+                                </div>
+                              )}
+                              {booking.notes && (
+                                <div className="appoint_Pa_detailRow">
+                                  <label>Additional notes:</label>
+                                  <span>{booking.notes}</span>
+                                </div>
+                              )}
+                              <div className="appoint_Pa_detailRow">
+                                <label>Appointment ID:</label>
+                                <span className="appoint_Pa_appointmentId">{booking._id}</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="appoint_Pa_bookingFormView">
+            <div className="appoint_Pa_formHeader">
+              <button 
+                className="appoint_Pa_backBtn"
+                onClick={() => setCurrentView("myBookings")}
+              >
+                ← Back to Appointments
+              </button>
+              <h2>Schedule New Appointment</h2>
+            </div>
+
+            <form className="appoint_Pa_appointmentForm" onSubmit={handleBookingSubmit}>
+              <div className="appoint_Pa_formGrid">
+                <div className="appoint_Pa_formGroup">
+                  <label className="appoint_Pa_formLabel">
+                    <Stethoscope size={16} />
+                    Medical Specialty
+                  </label>
+                  <select
+                    name="medicalSpecialty"
+                    value={bookingForm.medicalSpecialty}
+                    onChange={handleInputChange}
+                    className="appoint_Pa_formSelect"
+                    required
+                  >
+                    <option value="">Select a specialty</option>
+                    {specialties.map((specialty) => (
+                      <option key={specialty} value={specialty}>
+                        {specialty}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="appoint_Pa_formGroup">
+                  <label className="appoint_Pa_formLabel">
+                    <User size={16} />
+                    Select Doctor
+                  </label>
+                  <select
+                    name="doctorId"
+                    value={bookingForm.doctorId}
+                    onChange={handleInputChange}
+                    className="appoint_Pa_formSelect"
+                    required
+                    disabled={!bookingForm.medicalSpecialty}
+                  >
+                    <option value="">{bookingForm.medicalSpecialty ? "Choose a doctor" : "Select specialty first"}</option>
+                    {doctorList.map((doctor) => (
+                      <option key={doctor._id} value={doctor._id}>
+                        Dr. {doctor.name} - {doctor.specialization}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="appoint_Pa_formGroup">
+                  <label className="appoint_Pa_formLabel">
+                    <Calendar size={16} />
+                    Date & Time
+                  </label>
+                  <input
+                    type="datetime-local"
+                    name="date"
+                    value={bookingForm.date}
+                    onChange={handleInputChange}
+                    className="appoint_Pa_formInput"
+                    required
+                    min={new Date().toISOString().slice(0, 16)}
+                  />
+                </div>
+
+                <div className="appoint_Pa_formGroup appoint_Pa_fullWidth">
+                  <label className="appoint_Pa_formLabel">Reason for Visit</label>
+                  <input
+                    type="text"
+                    name="description"
+                    value={bookingForm.description}
+                    onChange={handleInputChange}
+                    className="appoint_Pa_formInput"
+                    placeholder="Brief description of your concern"
+                  />
+                </div>
+
+                <div className="appoint_Pa_formGroup appoint_Pa_fullWidth">
+                  <label className="appoint_Pa_formLabel">Additional Notes</label>
+                  <textarea
+                    name="notes"
+                    value={bookingForm.notes}
+                    onChange={handleInputChange}
+                    className="appoint_Pa_formTextarea"
+                    placeholder="Any additional information for the doctor"
+                    rows="4"
+                  />
+                </div>
               </div>
 
-              <button type="submit" className="submit-btn">Request Appointment</button>
+              <div className="appoint_Pa_formActions">
+                <button 
+                  type="button" 
+                  className="appoint_Pa_secondaryBtn"
+                  onClick={() => setCurrentView("myBookings")}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="appoint_Pa_primaryBtn">
+                  Request Appointment
+                </button>
+              </div>
             </form>
           </div>
         )}
       </div>
-      
     </div>
   );
 };

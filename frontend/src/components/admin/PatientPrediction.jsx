@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./PatientPrediction.css";
+import API_URL from "../../services/api";
 
 function PatientPrediction() {
   const [predictionResult, setPredictionResult] = useState(null);
@@ -22,7 +23,7 @@ function PatientPrediction() {
   
   const fetchPerformanceData = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/models/performance");
+      const res = await fetch(`${API_URL}/api/models/performance`);
       const data = await res.json();
       setPerformanceData(data);
     } catch (err) {
@@ -32,7 +33,7 @@ function PatientPrediction() {
 
   const fetchHistoricalData = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/data/features");
+      const res = await fetch(`${API_URL}/api/data/features`);
       const data = await res.json();
       setHistoricalData(data);
     } catch (err) {
@@ -51,7 +52,7 @@ function PatientPrediction() {
     setError(null);
     try {
       const res = await fetch(
-        `http://localhost:5000/api/predict?date=${date}`
+        `${API_URL}/api/predict?date=${date}`
       );
       const data = await res.json();
 
@@ -70,7 +71,7 @@ function PatientPrediction() {
   const handleRetrainModels = async () => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:5000/api/models/retrain", {
+      const res = await fetch(`${API_URL}/api/models/retrain`, {
         method: "POST",
       });
       const data = await res.json();

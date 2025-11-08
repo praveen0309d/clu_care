@@ -1,22 +1,36 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { 
+  Pill, 
+  User, 
+  Calendar, 
+  Plus, 
+  X, 
+  Clock,
+  FileText,
+  Loader,
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp
+} from "lucide-react";
 import "./Prescriptions.css";
+import API_URL from "../../services/api";
 
 function Prescriptions() {
-  const [patients, setPatients] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [formData, setFormData] = useState({});
+  const [patientList, setPatientList] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [prescriptionForms, setPrescriptionForms] = useState({});
   const [expandedPatients, setExpandedPatients] = useState({});
 
-  // Predefined dropdown data
-  const medicineOptions = [
+  // Predefined medication data
+  const medicationOptions = [
     "Paracetamol", "Amoxicillin", "Cetirizine", "Vitamin D3",
     "Ibuprofen", "Azithromycin", "Loratadine", "Calcium",
     "Metformin", "Atorvastatin", "Aspirin", "Omeprazole"
   ];
 
-  const timeOptions = [
+  const timingOptions = [
     "Before breakfast", "After breakfast", "Before lunch",
     "After lunch", "Before dinner", "After dinner",
     "At bedtime", "As needed"
@@ -28,205 +42,233 @@ function Prescriptions() {
   ];
 
   useEffect(() => {
-    const fetchPatients = async () => {
+    const fetchPatientData = async () => {
       try {
-        const doctorData = JSON.parse(localStorage.getItem("userData"));
-        const doctorId = doctorData?._id;
-        if (!doctorId) {
-          setError("Doctor ID not found");
-          setLoading(false);
+        const physicianData = JSON.parse(localStorage.getItem("userData"));
+        const physicianId = physicianData?._id;
+        if (!physicianId) {
+          setErrorMessage("Physician identification not available");
+          setIsLoading(false);
           return;
         }
 
-        const res = await axios.get(
-          `http://127.0.0.1:5000/api/patients/by-doctor/${doctorId}`
+        const response = await axios.get(
+          `${API_URL}/api/patients/by-doctor/${physicianId}`
         );
-        setPatients(res.data || []); // Ensure it's always an array
+        setPatientList(response.data || []);
       } catch (err) {
         console.error(err);
-        setError("Error fetching patients data");
-        setPatients([]); // Set to empty array on error
+        setErrorMessage("Unable to load patient information");
+        setPatientList([]);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
-    fetchPatients();
+    fetchPatientData();
   }, []);
 
-  const togglePatientExpansion = (patientId) => {
+  const togglePatientView = (patientId) => {
     setExpandedPatients(prev => ({
       ...prev,
       [patientId]: !prev[patientId]
     }));
   };
 
-  const handleMedicineChange = (patientId, field, value, index = 0) => {
-    setFormData((prev) => {
-      const patientForm = prev[patientId] || { medicines: [{}], date: new Date().toISOString().split('T')[0] };
-      let medicines = [...patientForm.medicines];
-      medicines[index] = { ...medicines[index], [field]: value };
-      return { ...prev, [patientId]: { ...patientForm, medicines } };
+  const updateMedicationField = (patientId, field, value, index = 0) => {
+    setPrescriptionForms((prev) => {
+      const patientForm = prev[patientId] || { 
+        medications: [{}], 
+        prescriptionDate: new Date().toISOString().split('T')[0] 
+      };
+      let medications = [...patientForm.medications];
+      medications[index] = { ...medications[index], [field]: value };
+      return { ...prev, [patientId]: { ...patientForm, medications } };
     });
   };
 
-  const handleAddMedicineRow = (patientId) => {
-    setFormData((prev) => {
-      const patientForm = prev[patientId] || { medicines: [{}], date: new Date().toISOString().split('T')[0] };
+  const addMedicationEntry = (patientId) => {
+    setPrescriptionForms((prev) => {
+      const patientForm = prev[patientId] || { 
+        medications: [{}], 
+        prescriptionDate: new Date().toISOString().split('T')[0] 
+      };
       return {
         ...prev,
         [patientId]: {
           ...patientForm,
-          medicines: [...patientForm.medicines, {}]
+          medications: [...patientForm.medications, {}]
         }
       };
     });
   };
 
-  const handleRemoveMedicineRow = (patientId, index) => {
-    setFormData((prev) => {
+  const removeMedicationEntry = (patientId, index) => {
+    setPrescriptionForms((prev) => {
       const patientForm = prev[patientId];
-      if (!patientForm || patientForm.medicines.length <= 1) return prev;
+      if (!patientForm || patientForm.medications.length <= 1) return prev;
       
-      const medicines = patientForm.medicines.filter((_, i) => i !== index);
-      return { ...prev, [patientId]: { ...patientForm, medicines } };
+      const medications = patientForm.medications.filter((_, i) => i !== index);
+      return { ...prev, [patientId]: { ...patientForm, medications } };
     });
   };
 
-  const handleDateChange = (patientId, value) => {
-    setFormData((prev) => {
-      const patientForm = prev[patientId] || { medicines: [{}], date: value };
-      return { ...prev, [patientId]: { ...patientForm, date: value } };
+  const updatePrescriptionDate = (patientId, value) => {
+    setPrescriptionForms((prev) => {
+      const patientForm = prev[patientId] || { 
+        medications: [{}], 
+        prescriptionDate: value 
+      };
+      return { ...prev, [patientId]: { ...patientForm, prescriptionDate: value } };
     });
   };
 
-  const handleSubmit = async (patientId) => {
+  const submitPrescription = async (patientId) => {
     try {
-      const data = formData[patientId];
-      if (!data || !data.date || data.medicines.some(med => !med.name || !med.dosage || !med.time)) {
-        alert("Please fill all required fields for each medicine");
+      const formData = prescriptionForms[patientId];
+      if (!formData || !formData.prescriptionDate || 
+          formData.medications.some(med => !med.name || !med.dosage || !med.time)) {
+        alert("Please complete all required medication fields");
         return;
       }
 
-      const res = await axios.post(
-        `http://127.0.0.1:5000/api/patients/${patientId}/prescriptions`,
-        data
+      const response = await axios.post(
+        `${API_URL}/api/patients/${patientId}/prescriptions`,
+        formData
       );
       
-      alert("Prescription added successfully!");
+      alert("Prescription successfully recorded!");
       
       // Update local state
-      setPatients((prev) =>
-        prev.map((p) =>
-          p._id === patientId
-            ? { ...p, prescriptions: [...(p.prescriptions || []), res.data.prescription] }
-            : p
+      setPatientList((prev) =>
+        prev.map((patient) =>
+          patient._id === patientId
+            ? { 
+                ...patient, 
+                prescriptions: [...(patient.prescriptions || []), response.data.prescription] 
+              }
+            : patient
         )
       );
       
       // Reset form for this patient
-      setFormData((prev) => ({ 
+      setPrescriptionForms((prev) => ({ 
         ...prev, 
-        [patientId]: { medicines: [{}], date: new Date().toISOString().split('T')[0] } 
+        [patientId]: { 
+          medications: [{}], 
+          prescriptionDate: new Date().toISOString().split('T')[0] 
+        } 
       }));
     } catch (err) {
       console.error(err);
-      alert("Failed to add prescription");
+      alert("Prescription submission failed");
     }
   };
 
-  // Loading state
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="prescriptions-container">
-        <div className="prescriptions-loading">
-          <div className="loading-spinner"></div>
-          <p>Loading patient data...</p>
-        </div>
+      <div className="med_manager_loading">
+        <Loader className="med_manager_spinner" size={32} />
+        <p>Loading patient records...</p>
       </div>
     );
   }
 
-  // Error state
-  if (error) {
+  if (errorMessage) {
     return (
-      <div className="prescriptions-container">
-        <div className="prescriptions-error">
-          <h2>Error</h2>
-          <p>{error}</p>
-          <button onClick={() => window.location.reload()} className="retry-btn">
-            Try Again
-          </button>
-        </div>
+      <div className="med_manager_error">
+        <AlertTriangle size={48} className="med_manager_error_icon" />
+        <h3>Data Loading Issue</h3>
+        <p>{errorMessage}</p>
+        <button onClick={() => window.location.reload()} className="med_manager_retry_btn">
+          Refresh Data
+        </button>
       </div>
     );
   }
 
-  // No patients state
-  if (!patients || patients.length === 0) {
+  if (!patientList || patientList.length === 0) {
     return (
-      <div className="prescriptions-container">
-        <div className="no-patients">
-          <h2>No Patients Found</h2>
-          <p>You don't have any patients assigned to you yet.</p>
-        </div>
+      <div className="med_manager_empty">
+        <User size={64} className="med_manager_empty_icon" />
+        <h3>No Patient Assignments</h3>
+        <p>You currently don't have any patients under your care.</p>
       </div>
     );
   }
 
-  // Main render
   return (
-    <div className="prescriptions-container">
-      <div className="prescriptions-header">
-        <h1>Patient Prescriptions</h1>
-        <p>Manage and create prescriptions for your patients</p>
+    <div className="med_manager_container">
+      {/* Header Section */}
+      <div className="med_manager_header">
+        <div className="med_manager_title_section">
+          <Pill size={28} className="med_manager_header_icon" />
+          <div>
+            <h1 className="med_manager_main_title">Medication Management</h1>
+            <p className="med_manager_subtitle">Prescribe and manage patient medications</p>
+          </div>
+        </div>
       </div>
 
-      <div className="patients-list">
-        {patients.map((patient) => {
-          const patientForm = formData[patient._id] || { 
-            medicines: [{}], 
-            date: new Date().toISOString().split('T')[0] 
+      {/* Patient List */}
+      <div className="med_patient_list">
+        {patientList.map((patient) => {
+          const patientForm = prescriptionForms[patient._id] || { 
+            medications: [{}], 
+            prescriptionDate: new Date().toISOString().split('T')[0] 
           };
-          const isExpanded = expandedPatients[patient._id];
+          const isPatientExpanded = expandedPatients[patient._id];
 
           return (
-            <div key={patient._id} className="patient-card">
+            <div key={patient._id} className="med_patient_card">
+              {/* Patient Summary */}
               <div 
-                className="patient-summary"
-                onClick={() => togglePatientExpansion(patient._id)}
+                className="med_patient_summary"
+                onClick={() => togglePatientView(patient._id)}
               >
-                <div className="patient-info">
-                  <h3>{patient.name}</h3>
-                  <p>ID: {patient.patientId} • {patient.age} years • {patient.gender}</p>
+                <div className="med_patient_identity">
+                  <div className="med_patient_avatar">
+                    {patient.name ? patient.name.charAt(0).toUpperCase() : 'P'}
+                  </div>
+                  <div className="med_patient_info">
+                    <h3 className="med_patient_name">{patient.name}</h3>
+                    <p className="med_patient_details">
+                      ID: {patient.patientId} • {patient.age} years • {patient.gender}
+                    </p>
+                  </div>
                 </div>
-                <div className="patient-actions">
-                  <span className={`expand-icon ${isExpanded ? 'expanded' : ''}`}>
-                    ▼
-                  </span>
+                <div className="med_patient_controls">
+                  <div className="med_expand_indicator">
+                    {isPatientExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                  </div>
                 </div>
               </div>
 
-              {isExpanded && (
-                <div className="patient-details">
+              {/* Expanded Patient Details */}
+              {isPatientExpanded && (
+                <div className="med_patient_expanded">
                   {/* Existing Prescriptions */}
-                  <div className="existing-prescriptions">
-                    <h4>Existing Prescriptions</h4>
+                  <div className="med_existing_prescriptions">
+                    <h4 className="med_section_title">
+                      <FileText size={18} />
+                      Current Prescriptions
+                    </h4>
                     {patient.prescriptions && patient.prescriptions.length > 0 ? (
-                      <div className="prescriptions-grid">
-                        {patient.prescriptions.map((prescription, idx) => (
-                          <div key={idx} className="prescription-card">
-                            <div className="prescription-header">
-                              <span className="prescription-date">
+                      <div className="med_prescriptions_grid">
+                        {patient.prescriptions.map((prescription, index) => (
+                          <div key={index} className="med_prescription_card">
+                            <div className="med_prescription_header">
+                              <span className="med_prescription_date">
+                                <Calendar size={14} />
                                 {new Date(prescription.date).toLocaleDateString()}
                               </span>
-                              <span className="prescription-status">Active</span>
+                              <span className="med_prescription_status">Active</span>
                             </div>
-                            <div className="medicines-list">
-                              {prescription.medicines && prescription.medicines.map((medicine, mIdx) => (
-                                <div key={mIdx} className="medicine-item">
-                                  <span className="medicine-name">{medicine.name}</span>
-                                  <span className="medicine-details">
+                            <div className="med_medications_list">
+                              {prescription.medicines && prescription.medicines.map((medicine, medIndex) => (
+                                <div key={medIndex} className="med_medication_item">
+                                  <span className="med_medication_name">{medicine.name}</span>
+                                  <span className="med_medication_schedule">
                                     {medicine.dosage} • {medicine.time}
                                   </span>
                                 </div>
@@ -236,71 +278,82 @@ function Prescriptions() {
                         ))}
                       </div>
                     ) : (
-                      <p className="no-prescriptions">No prescriptions found</p>
+                      <div className="med_no_prescriptions">
+                        <Pill size={24} />
+                        <p>No active prescriptions</p>
+                      </div>
                     )}
                   </div>
 
                   {/* New Prescription Form */}
-                  <div className="new-prescription-form">
-                    <h4>Add New Prescription</h4>
+                  <div className="med_new_prescription">
+                    <h4 className="med_section_title">
+                      <Plus size={18} />
+                      New Prescription
+                    </h4>
                     
-                    <div className="form-group">
-                      <label>Prescription Date</label>
+                    <div className="med_form_group">
+                      <label className="med_form_label">
+                        <Calendar size={16} />
+                        Prescription Date
+                      </label>
                       <input
                         type="date"
-                        value={patientForm.date}
-                        onChange={(e) => handleDateChange(patient._id, e.target.value)}
-                        className="date-input"
+                        value={patientForm.prescriptionDate}
+                        onChange={(e) => updatePrescriptionDate(patient._id, e.target.value)}
+                        className="med_date_input"
                       />
                     </div>
 
-                    <div className="medicines-form">
-                      <label>Medications</label>
-                      {patientForm.medicines.map((medicine, idx) => (
-                        <div key={idx} className="medicine-row">
-                          <select
-                            value={medicine.name || ""}
-                            onChange={(e) => handleMedicineChange(patient._id, "name", e.target.value, idx)}
-                            className="medicine-select"
-                            required
-                          >
-                            <option value="">Select Medicine</option>
-                            {medicineOptions.map((med, i) => (
-                              <option key={i} value={med}>{med}</option>
-                            ))}
-                          </select>
+                    <div className="med_medications_form">
+                      <label className="med_form_label">Medication Details</label>
+                      {patientForm.medications.map((medication, index) => (
+                        <div key={index} className="med_medication_row">
+                          <div className="med_medication_fields">
+                            <select
+                              value={medication.name || ""}
+                              onChange={(e) => updateMedicationField(patient._id, "name", e.target.value, index)}
+                              className="med_medication_select"
+                              required
+                            >
+                              <option value="">Select Medication</option>
+                              {medicationOptions.map((med, i) => (
+                                <option key={i} value={med}>{med}</option>
+                              ))}
+                            </select>
 
-                          <select
-                            value={medicine.dosage || ""}
-                            onChange={(e) => handleMedicineChange(patient._id, "dosage", e.target.value, idx)}
-                            className="dosage-select"
-                            required
-                          >
-                            <option value="">Dosage</option>
-                            {dosageOptions.map((dosage, i) => (
-                              <option key={i} value={dosage}>{dosage}</option>
-                            ))}
-                          </select>
+                            <select
+                              value={medication.dosage || ""}
+                              onChange={(e) => updateMedicationField(patient._id, "dosage", e.target.value, index)}
+                              className="med_dosage_select"
+                              required
+                            >
+                              <option value="">Dosage</option>
+                              {dosageOptions.map((dosage, i) => (
+                                <option key={i} value={dosage}>{dosage}</option>
+                              ))}
+                            </select>
 
-                          <select
-                            value={medicine.time || ""}
-                            onChange={(e) => handleMedicineChange(patient._id, "time", e.target.value, idx)}
-                            className="time-select"
-                            required
-                          >
-                            <option value="">Timing</option>
-                            {timeOptions.map((time, i) => (
-                              <option key={i} value={time}>{time}</option>
-                            ))}
-                          </select>
+                            <select
+                              value={medication.time || ""}
+                              onChange={(e) => updateMedicationField(patient._id, "time", e.target.value, index)}
+                              className="med_timing_select"
+                              required
+                            >
+                              <option value="">Timing</option>
+                              {timingOptions.map((time, i) => (
+                                <option key={i} value={time}>{time}</option>
+                              ))}
+                            </select>
+                          </div>
 
-                          {patientForm.medicines.length > 1 && (
+                          {patientForm.medications.length > 1 && (
                             <button
                               type="button"
-                              onClick={() => handleRemoveMedicineRow(patient._id, idx)}
-                              className="remove-medicine-btn"
+                              onClick={() => removeMedicationEntry(patient._id, index)}
+                              className="med_remove_btn"
                             >
-                              ×
+                              <X size={16} />
                             </button>
                           )}
                         </div>
@@ -308,18 +361,20 @@ function Prescriptions() {
 
                       <button
                         type="button"
-                        onClick={() => handleAddMedicineRow(patient._id)}
-                        className="add-medicine-btn"
+                        onClick={() => addMedicationEntry(patient._id)}
+                        className="med_add_btn"
                       >
-                        + Add Another Medicine
+                        <Plus size={16} />
+                        Add Another Medication
                       </button>
                     </div>
 
                     <button
-                      onClick={() => handleSubmit(patient._id)}
-                      className="submit-prescription-btn"
+                      onClick={() => submitPrescription(patient._id)}
+                      className="med_submit_btn"
                     >
-                      💊 Submit Prescription
+                      <Pill size={18} />
+                      Submit Prescription
                     </button>
                   </div>
                 </div>

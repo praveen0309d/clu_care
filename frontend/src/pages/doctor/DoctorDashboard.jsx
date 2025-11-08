@@ -1,198 +1,262 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { 
+  User, 
+  Calendar, 
+  FileText, 
+  Pill, 
+  Stethoscope,
+  Activity,
+  Phone,
+  Bell,
+  Settings
+} from "lucide-react";
 import "./DoctorDashboard.css";
 import API_URL from "../../services/api";
 
-// Import tab components (you'll need to create these)
+// Import tab components
 import DoctorProfile from "../../components/doctor/DoctorProfile";
 import Appointments from "../../components/doctor/Appointments.jsx";
 import PatientReports from "../../components/doctor/PatientReports";
 import AddPrescription from "../../components/doctor/Prescriptions.jsx";
 import FetusPredictor from "../../components/doctor/PredictForm.jsx";
 import FetalSegmentation from "../../components/doctor/FetalSegmentation.jsx";
-// import OtherFeatures from "./OtherFeatures";
 
 function DoctorDashboard() {
-  const [doctor, setDoctor] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState("profile");
-  const [notifications, setNotifications] = useState(3); // Example notification count
+  const [physician, setPhysician] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [activeSection, setActiveSection] = useState("profile");
+  const [notificationCount, setNotificationCount] = useState(3);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const doctorId = localStorage.getItem("userId");
+  const physicianId = localStorage.getItem("userId");
 
   useEffect(() => {
-    if (!doctorId) {
-      setError("Doctor ID not found. Please login again.");
-      setLoading(false);
+    if (!physicianId) {
+      setErrorMessage("Physician ID not found. Please login again.");
+      setIsLoading(false);
       return;
     }
 
-    const fetchDoctor = async () => {
+    const fetchPhysicianData = async () => {
       try {
         const response = await axios.get(
-          `${API_URL}/api/staff/${doctorId}`
+          `${API_URL}/api/staff/${physicianId}`
         );
-        setDoctor(response.data);
+        setPhysician(response.data);
       } catch (err) {
         console.error(err);
-        setError("Failed to fetch doctor data");
+        setErrorMessage("Unable to load physician information");
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
-    fetchDoctor();
-  }, [doctorId]);
+    fetchPhysicianData();
+  }, [physicianId]);
 
-  const handleToggleStatus = async () => {
-    if (!doctor) return;
+  const updateAvailabilityStatus = async () => {
+    if (!physician) return;
 
-    const newStatus = doctor.status === "active" ? "inactive" : "active";
+    const newStatus = physician.status === "active" ? "inactive" : "active";
 
     try {
       await axios.put(
-        `${API_URL}/api/staff/${doctorId}/status`,
+        `${API_URL}/api/staff/${physicianId}/status`,
         { status: newStatus },
         { headers: { "Content-Type": "application/json" } }
       );
 
-      setDoctor((prev) => ({ ...prev, status: newStatus }));
+      setPhysician((prev) => ({ ...prev, status: newStatus }));
     } catch (err) {
-      console.error("Failed to update status", err);
-      alert("Failed to update status");
+      console.error("Status update failed", err);
+      alert("Unable to update availability status");
     }
   };
 
+  const handleSectionChange = (section) => {
+    setActiveSection(section);
+    if (window.innerWidth < 768) {
+      setIsMobileMenuOpen(false);
+    }
+  };
 
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
 
-  if (loading) return <div className="dashboard-loading">Loading doctor profile...</div>;
-  if (error) return <div className="dashboard-error">{error}</div>;
-  if (!doctor) return <div className="dashboard-error">No doctor data found</div>;
+  if (isLoading) {
+    return (
+      <div className="phys_portal_loading">
+        <div className="phys_portal_spinner"></div>
+        <p>Loading physician portal...</p>
+      </div>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <div className="phys_portal_error">
+        <Activity size={24} />
+        <p>{errorMessage}</p>
+      </div>
+    );
+  }
+
+  if (!physician) {
+    return (
+      <div className="phys_portal_error">
+        <User size={24} />
+        <p>No physician data available</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="doctor-dashboard">
+    <div className="phys_portal_container">
       {/* Header Section */}
-      <header className="dashboard-header">
-        <div className="header-content">
-          <div className="welcome-section">
-            <h1>Welcome, Dr. {doctor.name}</h1>
-            <p className="welcome-message">Your patient care dashboard</p>
+      <header className="phys_portal_header">
+        <div className="phys_portal_header_content">
+          <div className="phys_portal_welcome">
+            <h1>Welcome, Dr. {physician.name}</h1>
+            <p className="phys_portal_greeting">Your medical practice dashboard</p>
           </div>
           
-          <div className="header-actions">
-            <div className="status-toggle">
-              <span className={`status-indicator ${doctor.status}`}>
-                {doctor.status === "active" ? "🟢 Online" : "🔴 Offline"}
+          <div className="phys_portal_header_controls">
+            {/* Mobile Menu Toggle */}
+            <button 
+              className="phys_portal_mobile_toggle"
+              onClick={toggleMobileMenu}
+            >
+              <span></span>
+              <span></span>
+              <span></span>
+            </button>
+
+            <div className="phys_portal_status_control">
+              <span className={`phys_portal_status_indicator ${physician.status}`}>
+                <span className="phys_portal_status_dot"></span>
+                {physician.status === "active" ? "Available" : "Unavailable"}
               </span>
-              <label className="toggle-switch">
+              <label className="phys_portal_toggle">
                 <input
                   type="checkbox"
-                  checked={doctor.status === "active"}
-                  onChange={handleToggleStatus}
+                  checked={physician.status === "active"}
+                  onChange={updateAvailabilityStatus}
                 />
-                <span className="toggle-slider"></span>
+                <span className="phys_portal_toggle_slider"></span>
               </label>
             </div>
             
+            <div className="phys_portal_notifications">
+              <Bell size={20} />
+              {notificationCount > 0 && (
+                <span className="phys_portal_notification_badge">
+                  {notificationCount}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </header>
 
-      <div className="dashboard-content">
-        {/* Sidebar Navigation */}
-        <nav className="dashboard-sidebar">
-          <div className="sidebar-header">
-            <div className="doctor-avatar">
-              {doctor.name ? doctor.name.charAt(0).toUpperCase() : 'D'}
+      <div className="phys_portal_content">
+        {/* Navigation Sidebar */}
+        <nav className={`phys_portal_sidebar ${isMobileMenuOpen ? 'phys_portal_sidebar_open' : ''}`}>
+          <div className="phys_portal_sidebar_header">
+            <div className="phys_portal_avatar">
+              {physician.name ? physician.name.charAt(0).toUpperCase() : 'D'}
             </div>
-            <div className="doctor-info">
-              <h3>Dr. {doctor.name}</h3>
-              <p>{doctor.specialization}</p>
-              <p className="department">{doctor.department}</p>
+            <div className="phys_portal_user_info">
+              <h3>Dr. {physician.name}</h3>
+              <p>{physician.specialization}</p>
+              <p className="phys_portal_department">{physician.department}</p>
             </div>
+            <button 
+              className="phys_portal_sidebar_close"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              ×
+            </button>
           </div>
 
-          <div className="sidebar-nav">
+          <div className="phys_portal_navigation">
             <button 
-              className={`nav-item ${activeTab === "profile" ? "active" : ""}`}
-              onClick={() => setActiveTab("profile")}
+              className={`phys_portal_nav_item ${activeSection === "profile" ? "phys_portal_nav_active" : ""}`}
+              onClick={() => handleSectionChange("profile")}
             >
-              <span className="nav-icon">👤</span>
-              Profile
+              <User className="phys_portal_nav_icon" size={20} />
+              <span className="phys_portal_nav_text">Profile</span>
             </button>
             
             <button 
-              className={`nav-item ${activeTab === "appointments" ? "active" : ""}`}
-              onClick={() => setActiveTab("appointments")}
+              className={`phys_portal_nav_item ${activeSection === "appointments" ? "phys_portal_nav_active" : ""}`}
+              onClick={() => handleSectionChange("appointments")}
             >
-              <span className="nav-icon">📅</span>
-              Appointments
-              <span className="nav-badge">5</span>
+              <Calendar className="phys_portal_nav_icon" size={20} />
+              <span className="phys_portal_nav_text">Appointments</span>
+              <span className="phys_portal_nav_count">5</span>
             </button>
             
             <button 
-              className={`nav-item ${activeTab === "patientReports" ? "active" : ""}`}
-              onClick={() => setActiveTab("patientReports")}
+              className={`phys_portal_nav_item ${activeSection === "patientReports" ? "phys_portal_nav_active" : ""}`}
+              onClick={() => handleSectionChange("patientReports")}
             >
-              <span className="nav-icon">📊</span>
-              Patient Reports
+              <FileText className="phys_portal_nav_icon" size={20} />
+              <span className="phys_portal_nav_text">Patient Reports</span>
+            </button>
+            
+            <button 
+              className={`phys_portal_nav_item ${activeSection === "addPrescription" ? "phys_portal_nav_active" : ""}`}
+              onClick={() => handleSectionChange("addPrescription")}
+            >
+              <Pill className="phys_portal_nav_icon" size={20} />
+              <span className="phys_portal_nav_text">Prescriptions</span>
+            </button>
+            
+            <button 
+              className={`phys_portal_nav_item ${activeSection === "predictform" ? "phys_portal_nav_active" : ""}`}
+              onClick={() => handleSectionChange("predictform")}
+            >
+              <Stethoscope className="phys_portal_nav_icon" size={20} />
+              <span className="phys_portal_nav_text">Fetal Screening</span>
             </button>
 
-            {/* <button 
-              className={`nav-item ${activeTab === "fetalfegmentation" ? "active" : ""}`}
-              onClick={() => setActiveTab("fetalfegmentation")}
-            >
-              <span className="nav-icon">📊</span>
-              Fetal Segmentation
-            </button> */}
-            
-            <button 
-              className={`nav-item ${activeTab === "addPrescription" ? "active" : ""}`}
-              onClick={() => setActiveTab("addPrescription")}
-            >
-              <span className="nav-icon">💊</span>
-              Add Prescription
-            </button>
-            
-            {/* <button 
-              className={`nav-item ${activeTab === "others" ? "active" : ""}`}
-              onClick={() => setActiveTab("others")}
-            >
-              <span className="nav-icon">⚙️</span>
-              Settings
-            </button> */}
-                      <button 
-  className={`nav-item ${activeTab === "predictform" ? "active" : ""}`}
-  onClick={() => setActiveTab("predictform")}
->
-  <span className="nav-icon">🩺</span>
-  Fetal Screening
-</button>
-
+           
           </div>
 
-          <div className="sidebar-footer">
-            <div className="emergency-contact">
-              <p>Emergency Contact</p>
-              <strong>+1 (555) 123-HELP</strong>
+          <div className="phys_portal_sidebar_footer">
+            <div className="phys_portal_emergency">
+              <Phone size={16} />
+              <div>
+                <p>Emergency Contact</p>
+                <strong>+1 (555) 123-HELP</strong>
+              </div>
             </div>
           </div>
         </nav>
 
         {/* Main Content Area */}
-        <main className="dashboard-main">
-          <div className="main-content">
-            {activeTab === "profile" && <DoctorProfile doctor={doctor} />}
-            {activeTab === "appointments" && <Appointments doctorId={doctorId} />}
-            {activeTab === "patientReports" && <PatientReports doctorId={doctorId} />}
-            {activeTab === "addPrescription" && <AddPrescription doctorId={doctorId} />}
-            {activeTab === "predictform" && <FetusPredictor doctorId={doctorId} />}
-            {activeTab === "fetalsegmentation" && <FetalSegmentation doctorId={doctorId} />}
-            {/* {activeTab === "others" && <OtherFeatures />} */}
+        <main className="phys_portal_main">
+          <div className="phys_portal_main_content">
+            {activeSection === "profile" && <DoctorProfile doctor={physician} />}
+            {activeSection === "appointments" && <Appointments doctorId={physicianId} />}
+            {activeSection === "patientReports" && <PatientReports doctorId={physicianId} />}
+            {activeSection === "addPrescription" && <AddPrescription doctorId={physicianId} />}
+            {activeSection === "predictform" && <FetusPredictor doctorId={physicianId} />}
+            {activeSection === "fetalsegmentation" && <FetalSegmentation doctorId={physicianId} />}
           </div>
         </main>
       </div>
+
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="phys_portal_mobile_overlay"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
     </div>
   );
 }

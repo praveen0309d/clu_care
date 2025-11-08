@@ -1,0 +1,362 @@
+/* Medication List Container */
+.med_list_container {
+  background: #ffffff;
+  min-height: 100vh;
+  color: #000000;
+  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Header Section */
+.med_list_header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.med_list_title_section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.med_list_icon {
+  color: #3b82f6;
+}
+
+.med_list_title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.25rem 0;
+}
+
+.med_list_subtitle {
+  color: #6b7280;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.med_list_stats {
+  display: flex;
+  align-items: center;
+}
+
+.med_list_count {
+  background: #f3f4f6;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+/* Empty State */
+.med_list_empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #6b7280;
+}
+
+.med_list_empty_icon {
+  margin: 0 auto 1.5rem;
+  color: #d1d5db;
+}
+
+.med_list_empty h3 {
+  color: #374151;
+  margin-bottom: 0.5rem;
+  font-size: 1.25rem;
+}
+
+.med_list_empty p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* Medications Grid */
+.med_list_grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.med_list_card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.med_list_card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  transform: translateY(-2px);
+}
+
+/* Card Header */
+.med_list_card_header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.med_list_prescription_info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.med_list_prescription_number {
+  font-weight: 600;
+  color: #111827;
+  font-size: 1.1rem;
+}
+
+.med_list_date {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+  background: #f8fafc;
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+}
+
+.med_list_doctor {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.875rem;
+  color: #374151;
+  background: #f0f9ff;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #e0f2fe;
+}
+
+/* Medications Section */
+.med_list_medications {
+  margin-bottom: 1.5rem;
+}
+
+.med_list_medications_title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 1rem 0;
+}
+
+.med_list_medications_list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.med_list_medication_item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.875rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #f1f5f9;
+}
+
+.med_list_medication_main {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.med_list_medication_icon {
+  color: #3b82f6;
+  flex-shrink: 0;
+}
+
+.med_list_medication_name {
+  font-weight: 600;
+  color: #111827;
+  font-size: 0.95rem;
+}
+
+.med_list_medication_details {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-left: 1.625rem;
+}
+
+.med_list_dosage {
+  background: #ffffff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  font-weight: 500;
+}
+
+.med_list_separator {
+  color: #d1d5db;
+}
+
+.med_list_frequency {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Instructions Section */
+.med_list_instructions {
+  padding: 1rem;
+  background: #f0f9ff;
+  border-radius: 8px;
+  border: 1px solid #e0f2fe;
+}
+
+.med_list_instructions_header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  color: #0369a1;
+  font-size: 0.9rem;
+}
+
+.med_list_instructions_text {
+  margin: 0;
+  color: #374151;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* Loading State */
+.med_list_loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.med_list_spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f4f6;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  animation: med_list_spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes med_list_spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.med_list_loading p {
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Error State */
+.med_list_error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #dc2626;
+  margin: 2rem;
+}
+
+.med_list_error p {
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .med_list_container {
+    padding: 1rem;
+  }
+
+  .med_list_header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .med_list_title_section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    text-align: left;
+  }
+
+  .med_list_grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .med_list_card {
+    padding: 1.25rem;
+  }
+
+  .med_list_prescription_info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .med_list_medication_item {
+    padding: 0.75rem;
+  }
+
+  .med_list_medication_details {
+    margin-left: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .med_list_instructions {
+    padding: 0.875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .med_list_container {
+    padding: 0.75rem;
+  }
+
+  .med_list_card {
+    padding: 1rem;
+  }
+
+  .med_list_medication_main {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.375rem;
+  }
+
+  .med_list_medication_details {
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+
+  .med_list_prescription_number {
+    font-size: 1rem;
+  }
+}
